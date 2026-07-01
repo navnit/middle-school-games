@@ -1,4 +1,4 @@
-import type { CargoItem, ParticleAtom, ParticleBond, TargetId } from '../domain/types';
+import type { CargoItem, ParticleBond, ParticleNode, ParticleNodeKind, TargetId } from '../domain/types';
 
 const colors: Record<string, string> = {
   Ar: '#c4b5fd',
@@ -23,15 +23,41 @@ const colors: Record<string, string> = {
   Water: '#38bdf8'
 };
 
-function atom(id: string, element: string, x: number, y: number, label = element): ParticleAtom {
+function node(
+  nodeKind: ParticleNodeKind,
+  id: string,
+  element: string,
+  x: number,
+  y: number,
+  label = element
+): ParticleNode {
   return {
     id,
+    nodeKind,
     element,
     label,
     x,
     y,
     color: colors[element] ?? '#e2e8f0'
   };
+}
+
+function atom(id: string, element: string, x: number, y: number, label = element): ParticleNode {
+  return node('atom', id, element, x, y, label);
+}
+
+function ion(id: string, element: string, x: number, y: number, label = element): ParticleNode {
+  return node('ion', id, element, x, y, label);
+}
+
+function mixtureComponent(
+  id: string,
+  element: string,
+  x: number,
+  y: number,
+  label = element
+): ParticleNode {
+  return node('mixture-component', id, element, x, y, label);
 }
 
 function bond(from: string, to: string): ParticleBond {
@@ -44,7 +70,7 @@ function makeItem(
   formula: string | undefined,
   kind: CargoItem['kind'],
   target: TargetId,
-  atoms: ParticleAtom[],
+  atoms: ParticleNode[],
   bonds: ParticleBond[],
   hint: string,
   explanation: string,
@@ -240,8 +266,8 @@ export const CARGO_LIBRARY: CargoItem[] = [
       atom('o1', 'O', 28, 42),
       atom('h1', 'H', 16, 58),
       atom('h2', 'H', 40, 58),
-      atom('na1', 'Na', 65, 36),
-      atom('cl1', 'Cl', 78, 64)
+      ion('na1', 'Na', 65, 36),
+      ion('cl1', 'Cl', 78, 64)
     ],
     [bond('o1', 'h1'), bond('o1', 'h2')],
     'The salt and water are together, but they are not one molecule.',
@@ -255,11 +281,11 @@ export const CARGO_LIBRARY: CargoItem[] = [
     'real-world',
     'mixture',
     [
-      atom('water1', 'Water', 22, 34),
-      atom('water2', 'Water', 62, 66),
-      atom('sugar1', 'Sugar', 42, 48),
-      atom('lemon1', 'Lemon', 76, 30),
-      atom('lemon2', 'Lemon', 30, 72)
+      mixtureComponent('water1', 'Water', 22, 34),
+      mixtureComponent('water2', 'Water', 62, 66),
+      mixtureComponent('sugar1', 'Sugar', 42, 48),
+      mixtureComponent('lemon1', 'Lemon', 76, 30),
+      mixtureComponent('lemon2', 'Lemon', 30, 72)
     ],
     [],
     'Look for water, sugar, and lemon substances together.',
@@ -272,10 +298,10 @@ export const CARGO_LIBRARY: CargoItem[] = [
     'real-world',
     'mixture',
     [
-      atom('nut1', 'Food', 24, 30, 'Nut'),
-      atom('raisin1', 'Food', 58, 35, 'Raisin'),
-      atom('seed1', 'Food', 78, 62, 'Seed'),
-      atom('chip1', 'Food', 36, 70, 'Chip')
+      mixtureComponent('nut1', 'Food', 24, 30, 'Nut'),
+      mixtureComponent('raisin1', 'Food', 58, 35, 'Raisin'),
+      mixtureComponent('seed1', 'Food', 78, 62, 'Seed'),
+      mixtureComponent('chip1', 'Food', 36, 70, 'Chip')
     ],
     [],
     'The parts stay visibly separate after mixing.',
@@ -288,11 +314,11 @@ export const CARGO_LIBRARY: CargoItem[] = [
     'real-world',
     'mixture',
     [
-      atom('sand1', 'Sand', 22, 34),
-      atom('mineral1', 'Mineral', 48, 26),
-      atom('organic1', 'Organic', 70, 46),
-      atom('water1', 'Water', 36, 72),
-      atom('fe1', 'Fe', 76, 72)
+      mixtureComponent('sand1', 'Sand', 22, 34),
+      mixtureComponent('mineral1', 'Mineral', 48, 26),
+      mixtureComponent('organic1', 'Organic', 70, 46),
+      mixtureComponent('water1', 'Water', 36, 72),
+      mixtureComponent('iron1', 'Mineral', 76, 72, 'Iron')
     ],
     [],
     'Look for several natural materials together.',
@@ -305,10 +331,10 @@ export const CARGO_LIBRARY: CargoItem[] = [
     'real-world',
     'mixture',
     [
-      atom('cereal1', 'Cereal', 24, 34),
-      atom('milk1', 'Milk', 52, 36),
-      atom('cereal2', 'Cereal', 76, 60),
-      atom('milk2', 'Milk', 36, 70)
+      mixtureComponent('cereal1', 'Cereal', 24, 34),
+      mixtureComponent('milk1', 'Milk', 52, 36),
+      mixtureComponent('cereal2', 'Cereal', 76, 60),
+      mixtureComponent('milk2', 'Milk', 36, 70)
     ],
     [],
     'The cereal and milk are together, but still separate materials.',
@@ -321,12 +347,12 @@ export const CARGO_LIBRARY: CargoItem[] = [
     'real-world',
     'mixture',
     [
-      atom('water1', 'Water', 20, 34),
-      atom('water2', 'Water', 44, 60),
-      atom('na1', 'Na', 68, 34),
-      atom('cl1', 'Cl', 80, 62),
-      atom('sand1', 'Sand', 32, 78),
-      atom('ca1', 'Ca', 58, 78)
+      mixtureComponent('water1', 'Water', 20, 34),
+      mixtureComponent('water2', 'Water', 44, 60),
+      ion('na1', 'Na', 68, 34),
+      ion('cl1', 'Cl', 80, 62),
+      mixtureComponent('sand1', 'Sand', 32, 78),
+      ion('ca1', 'Ca', 58, 78)
     ],
     [],
     'Look for water plus dissolved and tiny suspended substances.',

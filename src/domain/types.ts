@@ -8,8 +8,11 @@ export type PlayStyle = 'co-op' | 'team-turns';
 
 export type CargoKind = 'particle-diagram' | 'real-world' | 'hybrid';
 
-export interface ParticleAtom {
+export type ParticleNodeKind = 'atom' | 'molecule' | 'ion' | 'mixture-component';
+
+export interface ParticleNode {
   id: string;
+  nodeKind: ParticleNodeKind;
   element: string;
   label: string;
   x: number;
@@ -23,7 +26,7 @@ export interface ParticleBond {
 }
 
 export interface ParticleDiagram {
-  atoms: ParticleAtom[];
+  atoms: ParticleNode[];
   bonds: ParticleBond[];
 }
 
