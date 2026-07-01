@@ -79,3 +79,244 @@ h1 {
     font-size: 20px;
   }
 }
+
+.particle-diagram {
+  width: min(100%, 180px);
+  aspect-ratio: 1;
+  overflow: visible;
+  display: block;
+}
+
+.particle-bond {
+  stroke: #3f4b5f;
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.particle-node {
+  color: #10215b;
+}
+
+.particle-shape {
+  stroke: #172033;
+  stroke-width: 2;
+}
+
+.particle-shape--mixture-component {
+  stroke: #9a5d05;
+  stroke-width: 2.25;
+}
+
+.particle-node--ion .particle-shape {
+  stroke: #075985;
+}
+
+.particle-ion-ring {
+  fill: none;
+  stroke: #0ea5e9;
+  stroke-dasharray: 3 3;
+  stroke-width: 2.5;
+}
+
+.particle-label {
+  fill: #111827;
+  font-size: 10px;
+  font-weight: 900;
+  pointer-events: none;
+}
+
+.particle-node--mixture-component .particle-label {
+  font-size: 6.8px;
+}
+
+.particle-kind-caption {
+  fill: #075985;
+  font-size: 6px;
+  font-weight: 900;
+  pointer-events: none;
+  text-transform: uppercase;
+}
+
+.particle-node--mixture-component .particle-kind-caption {
+  fill: #9a5d05;
+}
+
+.cargo-card {
+  width: 100%;
+  min-width: 156px;
+  min-height: 196px;
+  border: 2px solid #1f4fb8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  display: grid;
+  grid-template-rows: minmax(118px, 1fr) auto auto;
+  gap: 8px;
+  justify-items: center;
+  align-items: center;
+  padding: 14px;
+  touch-action: manipulation;
+  cursor: pointer;
+  box-shadow: 0 8px 0 rgba(14, 76, 148, 0.14);
+}
+
+.cargo-card:hover {
+  transform: translateY(-1px);
+}
+
+.cargo-card:focus-visible,
+.drop-bin:focus-visible,
+.nested-bin:focus-visible {
+  outline: 4px solid #facc15;
+  outline-offset: 3px;
+}
+
+.cargo-card__diagram {
+  display: grid;
+  width: 100%;
+  place-items: center;
+}
+
+.cargo-card__name {
+  color: #0f1f66;
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.cargo-card__formula,
+.cargo-card__status {
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.cargo-card__formula {
+  background: #dbeafe;
+  color: #143a9f;
+}
+
+.cargo-card__status {
+  background: #fff7ed;
+  color: #9a3412;
+}
+
+.cargo-card--damaged {
+  border-color: #dc2626;
+  background: #fff1f2;
+  box-shadow: 0 8px 0 rgba(220, 38, 38, 0.16);
+}
+
+.cargo-card--repair-dock {
+  border-color: #d97706;
+  background: #fffbeb;
+  box-shadow: 0 8px 0 rgba(217, 119, 6, 0.16);
+}
+
+.cargo-card--rescued {
+  border-color: #16a34a;
+  background: #f0fdf4;
+}
+
+.drop-bin {
+  width: 100%;
+  min-height: 240px;
+  border: 3px solid #1d6fd6;
+  border-radius: 8px;
+  background: #edf6ff;
+  color: #0f1f66;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 18px;
+  text-align: center;
+  touch-action: manipulation;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.75);
+}
+
+.drop-bin--atom {
+  border-color: #3cac2d;
+  background: #f1fce9;
+}
+
+.drop-bin--molecule {
+  cursor: default;
+}
+
+.drop-bin--mixture {
+  border-color: #e28a08;
+  background: #fff8e8;
+}
+
+.drop-bin strong,
+.drop-bin h2 {
+  display: block;
+  margin: 0;
+  color: #0f1f66;
+  font-size: clamp(28px, 3.4vw, 48px);
+  font-weight: 900;
+  line-height: 1.05;
+}
+
+.drop-bin span,
+.drop-bin p {
+  margin: 8px 0 0;
+  color: #18265e;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.nested-bins {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.nested-bin {
+  min-height: 170px;
+  border: 2px solid #65a9f4;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #0f1f66;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  padding: 14px;
+  touch-action: manipulation;
+  cursor: pointer;
+}
+
+.nested-bin:hover,
+.drop-bin:not(.drop-bin--molecule):hover {
+  transform: translateY(-1px);
+}
+
+.nested-bin strong {
+  font-size: clamp(22px, 2.4vw, 34px);
+}
+
+.nested-bin span {
+  display: block;
+  max-width: 220px;
+  margin-top: 8px;
+  color: #18265e;
+  font-size: 16px;
+  font-weight: 800;
+}
+
+@media (max-width: 720px) {
+  .nested-bins {
+    grid-template-columns: 1fr;
+  }
+
+  .drop-bin {
+    min-height: 190px;
+  }
+}
