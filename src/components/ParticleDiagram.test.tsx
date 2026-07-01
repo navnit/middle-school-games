@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { CARGO_LIBRARY } from '../content/cargoLibrary';
+import type { ParticleDiagram as ParticleDiagramData } from '../domain/types';
 import { ParticleDiagram } from './ParticleDiagram';
 
 describe('ParticleDiagram', () => {
@@ -21,7 +22,36 @@ describe('ParticleDiagram', () => {
 
     expect(container.querySelectorAll('[data-node-kind="ion"]').length).toBeGreaterThan(0);
     expect(container.querySelectorAll('[data-node-kind="mixture-component"]').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Water mixture component').length).toBeGreaterThan(0);
-    expect(screen.getByText('Na ion')).toBeInTheDocument();
+    expect(screen.getAllByText('ion').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('mix').length).toBeGreaterThan(0);
+    expect(container.querySelector('[data-node-kind="ion"] .particle-kind-caption')).toHaveTextContent('ion');
+    expect(container.querySelector('[data-node-kind="mixture-component"] .particle-kind-caption')).toHaveTextContent(
+      'mix'
+    );
+  });
+
+  it('marks molecule nodes with their own visual hook and caption', () => {
+    const moleculeDiagram: ParticleDiagramData = {
+      atoms: [
+        {
+          id: 'm1',
+          nodeKind: 'molecule',
+          element: 'O',
+          label: 'O2',
+          x: 50,
+          y: 50,
+          color: '#3b82f6'
+        }
+      ],
+      bonds: []
+    };
+    const { container } = render(
+      <ParticleDiagram diagram={moleculeDiagram} title="Molecule node sample" />
+    );
+
+    expect(screen.getByRole('img', { name: /Molecule node sample/i })).toBeInTheDocument();
+    expect(container.querySelector('[data-node-kind="molecule"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-node-kind="molecule"] .particle-molecule-ring')).toBeInTheDocument();
+    expect(screen.getByText('mol')).toBeInTheDocument();
   });
 });

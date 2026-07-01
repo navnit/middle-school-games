@@ -43,6 +43,9 @@ function renderNodeShape(node: ParticleNode) {
       {node.nodeKind === 'ion' ? (
         <circle className="particle-ion-ring" cx={node.x} cy={node.y} r="16" />
       ) : null}
+      {node.nodeKind === 'molecule' ? (
+        <circle className="particle-molecule-ring" cx={node.x} cy={node.y} r="16" />
+      ) : null}
     </>
   );
 }
@@ -75,7 +78,8 @@ export function ParticleDiagram({ diagram, title }: ParticleDiagramProps) {
 
       {diagram.atoms.map((node) => {
         const caption = KIND_CAPTIONS[node.nodeKind];
-        const shouldShowKindCaption = node.nodeKind === 'ion' || node.nodeKind === 'mixture-component';
+        const shouldShowKindCaption =
+          node.nodeKind === 'ion' || node.nodeKind === 'molecule' || node.nodeKind === 'mixture-component';
 
         return (
           <g
@@ -91,7 +95,7 @@ export function ParticleDiagram({ diagram, title }: ParticleDiagramProps) {
             </text>
             {shouldShowKindCaption ? (
               <text className="particle-kind-caption" x={node.x} y={node.y + 22} textAnchor="middle">
-                {node.nodeKind === 'ion' ? 'ion' : 'mix'}
+                {node.nodeKind === 'mixture-component' ? 'mix' : node.nodeKind === 'molecule' ? 'mol' : 'ion'}
               </text>
             ) : null}
           </g>
