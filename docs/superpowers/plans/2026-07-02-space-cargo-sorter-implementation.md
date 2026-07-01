@@ -37,7 +37,8 @@ The approved spec and this plan remain the source of truth for exact copy, cargo
 - Create `src/components/MissionBoard.tsx`: board layout and interaction wiring.
 - Create `src/**/*.test.tsx` and `src/**/*.test.ts`: unit and interaction coverage.
 - Create `e2e/mission-board.spec.ts`: browser smoke coverage for layout and flows.
-- Create `playwright.config.ts`: browser verification configuration.
+- Create `playwright.config.ts`: minimal e2e boundary during scaffold, expanded browser verification configuration in Task 6.
+- Create `e2e/scaffold.spec.ts`: minimal e2e command boundary during scaffold.
 
 ## Task 1: Scaffold React, Vite, TypeScript, and Test Harness
 
@@ -52,6 +53,8 @@ The approved spec and this plan remain the source of truth for exact copy, cargo
 - Create: `src/App.tsx`
 - Create: `src/App.test.tsx`
 - Create: `src/styles.css`
+- Create: `playwright.config.ts`
+- Create: `e2e/scaffold.spec.ts`
 
 - [ ] **Step 1: Create the npm project definition**
 
@@ -85,7 +88,7 @@ Write `package.json`:
     "jsdom": "^25.0.1",
     "typescript": "^5.7.2",
     "vite": "^6.0.6",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.9"
   }
 }
 ```
@@ -158,6 +161,27 @@ Write `vitest.setup.ts`:
 
 ```ts
 import '@testing-library/jest-dom/vitest';
+```
+
+Write `playwright.config.ts`:
+
+```ts
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/*.spec.ts'
+});
+```
+
+Write `e2e/scaffold.spec.ts`:
+
+```ts
+import { expect, test } from '@playwright/test';
+
+test('loads the scaffold e2e boundary', () => {
+  expect(true).toBe(true);
+});
 ```
 
 - [ ] **Step 4: Write the first failing app smoke test**
@@ -313,12 +337,22 @@ Run: `npm run build`
 
 Expected: TypeScript and Vite build complete without errors.
 
-- [ ] **Step 8: Commit scaffold**
+- [ ] **Step 8: Run e2e boundary and audit**
+
+Run: `npm run test:e2e`
+
+Expected: PASS with the scaffold boundary test.
+
+Run: `npm audit --audit-level=moderate`
+
+Expected: PASS with 0 vulnerabilities.
+
+- [ ] **Step 9: Commit scaffold**
 
 Run:
 
 ```bash
-git add package.json package-lock.json index.html tsconfig.json tsconfig.node.json vite.config.ts vitest.setup.ts src
+git add package.json package-lock.json index.html tsconfig.json tsconfig.node.json vite.config.ts vitest.setup.ts playwright.config.ts e2e src
 git commit -m "feat: scaffold Space Cargo Sorter app"
 ```
 
@@ -2106,11 +2140,11 @@ Expected: commit succeeds.
 ## Task 6: Add Browser Smoke Tests and Final Touchscreen Verification
 
 **Files:**
-- Create: `playwright.config.ts`
+- Modify: `playwright.config.ts`
 - Create: `e2e/mission-board.spec.ts`
 - Modify: `src/styles.css`
 
-- [ ] **Step 1: Add Playwright config**
+- [ ] **Step 1: Expand Playwright config**
 
 Write `playwright.config.ts`:
 
