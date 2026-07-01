@@ -1,0 +1,181 @@
+import { useMemo, useReducer } from 'react';
+import { createInitialGameState, gameReducer, getActiveCargo } from '../domain/gameState';
+import type { CargoItem } from '../domain/types';
+import { TARGET_LABELS } from '../domain/types';
+import { CargoCard } from './CargoCard';
+import { DropBin } from './DropBin';
+import { TeacherControls } from './TeacherControls';
+
+interface MissionBoardProps {
+  cargoItems: CargoItem[];
+  initialCargoOrder?: string[];
+}
+
+export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProps) {
+  const initialState = useMemo(
+    () => createInitialGameState(cargoItems, { cargoOrder: initialCargoOrder }),
+    [cargoItems, initialCargoOrder]
+  );
+  const [state, dispatch] = useReducer(gameReducer, initialState);
+  const activeCargo = getActiveCargo(state);
+  const currentTeam = state.teams[state.currentTeamIndex];
+  const score =
+    state.playStyle === 'co-op'
+      ? Object.values(state.scores).reduce((total, teamScore) => total + teamScore, 0)
+      : state.scores[currentTeam];
+
+  const queuedCargo = state.cargoOrder
+    .slice(state.activeIndex + 1, state.activeIndex + 4)
+    .map((cargoId) => cargoItems.find((item) => item.id === cargoId))
+    .filter((cargo): cargo is CargoItem => Boolean(cargo));
+
+  return (
+    <main className="mission-board" aria-label="Space Cargo Sorter mission board">
+      <header className="mission-topbar">
+        <div className="mission-title">
+          <p className="eyebrow">Teacher-led chemistry rescue</p>
+          <h1>Space Cargo Sorter</h1>
+        </div>
+        <div className="mission-status" aria-label="Round status">
+          <span>{state.mode === 'practice' ? 'Practice Mode' : 'Rescue Rush'}</span>
+          <span>{state.paused ? 'Paused' : 'Round Active'}</span>
+          <span>{state.phase === 'round-complete' ? 'Round Complete' : `Cargo ${state.activeIndex + 1} of ${state.cargoOrder.length}`}</span>
+        </div>
+        <div className="score-panel" aria-label="Score panel">
+          <span>{state.playStyle === 'team-turns' ? `Current Team: ${currentTeam}` : 'Class Co-op'}</span>
+          <strong>Score: {score}</strong>
+        </div>
+      </header>
+
+      <div className="mission-layout">
+        <section className="cargo-panel" aria-labelledby="active-cargo-title">
+          <div className="panel-heading">
+            <p className="eyebrow">Cargo Bay</p>
+            <h2 id="active-cargo-title">Active Cargo</h2>
+          </div>
+
+          {activeCargo ? (
+            <CargoCard
+              cargo={activeCargo}
+              state={state.damagedCargoIds.includes(activeCargo.id) ? 'damaged' : 'active'}
+            />
+          ) : (
+            <p className="empty-state">Round complete.</p>
+          )}
+
+          <div className="queue-panel" aria-label="Upcoming cargo">
+            <h3>Up Next</h3>
+            <div className="queue-list">
+              {queuedCargo.length > 0 ? (
+                queuedCargo.map((cargo) => <CargoCard key={cargo.id} cargo={cargo} state="queued" />)
+              ) : (
+                <p className="empty-state empty-state--compact">No more cargo queued.</p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="sorting-board" aria-label="Rescue bays">
+          <DropBin
+            kind="atom"
+            activeCargoName={activeCargo?.displayName}
+            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+          />
+          <DropBin
+            kind="molecule"
+            activeCargoName={activeCargo?.displayName}
+            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+          />
+          <DropBin
+            kind="mixture"
+            activeCargoName={activeCargo?.displayName}
+            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+          />
+        </section>
+
+        <section className="feedback-panel" aria-label="Feedback and teacher panel">
+          <TeacherControls
+            mode={state.mode}
+            playStyle={state.playStyle}
+            paused={state.paused}
+            canHint={Boolean(activeCargo)}
+            canReveal={state.phase === 'class-check'}
+            canAdvance={state.phase === 'revealed'}
+            canUndo={state.history.length > 0}
+            onModeChange={(mode) => dispatch({ type: 'set-mode', mode })}
+            onPlayStyleChange={(playStyle) => dispatch({ type: 'set-play-style', playStyle })}
+            onHint={() => dispatch({ type: 'show-hint' })}
+            onReveal={() => dispatch({ type: 'reveal' })}
+            onNext={() => dispatch({ type: 'next-cargo' })}
+            onUndo={() => dispatch({ type: 'undo' })}
+            onPause={() => dispatch({ type: 'toggle-pause' })}
+            onSwitchTeam={() => dispatch({ type: 'switch-team' })}
+          />
+
+          <div className="feedback-stack">
+            {activeCargo && state.hintedCargoId === activeCargo.id ? (
+              <article className="feedback-card">
+                <h2>Hint</h2>
+                <p>{activeCargo.hint}</p>
+              </article>
+            ) : null}
+
+            {state.phase === 'class-check' && state.classCheck ? (
+              <article className="feedback-card">
+                <h2>Class Check</h2>
+                <p>Ask the class to vote or justify before revealing.</p>
+                <p>Proposed bay: {TARGET_LABELS[state.classCheck.proposedTarget]}</p>
+              </article>
+            ) : null}
+
+            {state.revealed ? (
+              <article className="feedback-card feedback-card--revealed">
+                <h2>{state.revealed.isCorrect ? 'Correct' : 'Review Answer'}</h2>
+                <p>{state.revealed.explanation}</p>
+                <p>Correct bay: {TARGET_LABELS[state.revealed.expectedTarget]}</p>
+              </article>
+            ) : null}
+
+            {activeCargo && state.damagedCargoIds.includes(activeCargo.id) ? (
+              <article className="feedback-card feedback-card--damaged">
+                <h2>Damaged cargo</h2>
+                <p>{activeCargo.displayName} needs a second try.</p>
+              </article>
+            ) : null}
+
+            {state.repairDockCargoIds.length > 0 ? (
+              <section className="feedback-card feedback-card--repair" aria-labelledby="repair-dock-title">
+                <h2 id="repair-dock-title">Repair Dock</h2>
+                <div className="repair-list">
+                  {state.repairDockCargoIds.map((cargoId) => {
+                    const cargo = cargoItems.find((item) => item.id === cargoId);
+
+                    if (!cargo) {
+                      return null;
+                    }
+
+                    return (
+                      <div className="repair-item" key={cargo.id}>
+                        <div className="repair-item__cargo">
+                          <strong>{cargo.displayName}</strong>
+                          {cargo.formula ? <span>{cargo.formula}</span> : null}
+                        </div>
+                        <button
+                          type="button"
+                          aria-label={`Mark ${cargo.displayName} repaired`}
+                          onClick={() => dispatch({ type: 'mark-repaired', cargoId: cargo.id })}
+                        >
+                          Mark Repaired
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ) : null}
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
