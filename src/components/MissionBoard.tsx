@@ -1,7 +1,8 @@
-import { useMemo, useReducer } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
 import { createInitialGameState, gameReducer, getActiveCargo } from '../domain/gameState';
-import type { CargoItem } from '../domain/types';
+import type { CargoItem, TargetId } from '../domain/types';
 import { TARGET_LABELS } from '../domain/types';
+import type { DragPoint } from './CargoCard';
 import { CargoCard } from './CargoCard';
 import { DropBin } from './DropBin';
 import { TeacherControls } from './TeacherControls';
@@ -11,12 +12,23 @@ interface MissionBoardProps {
   initialCargoOrder?: string[];
 }
 
+const DROP_TARGET_IDS: TargetId[] = ['atom', 'element-molecule', 'compound-molecule', 'mixture'];
+
+function readDropTargetFromPoint(x: number, y: number): TargetId | undefined {
+  const dropTarget = document.elementFromPoint(x, y)?.closest<HTMLElement>('[data-drop-target]');
+  const target = dropTarget?.dataset.dropTarget;
+
+  return DROP_TARGET_IDS.includes(target as TargetId) ? (target as TargetId) : undefined;
+}
+
 export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProps) {
   const initialState = useMemo(
     () => createInitialGameState(cargoItems, { cargoOrder: initialCargoOrder }),
     [cargoItems, initialCargoOrder]
   );
   const [state, dispatch] = useReducer(gameReducer, initialState);
+  const [draggingCargoId, setDraggingCargoId] = useState<string | undefined>();
+  const [dragPoint, setDragPoint] = useState<DragPoint | undefined>();
   const activeCargo = getActiveCargo(state);
   const currentTeam = state.teams[state.currentTeamIndex];
   const score =
@@ -28,9 +40,73 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
     .slice(state.activeIndex + 1, state.activeIndex + 4)
     .map((cargoId) => cargoItems.find((item) => item.id === cargoId))
     .filter((cargo): cargo is CargoItem => Boolean(cargo));
+  const draggingCargo = draggingCargoId
+    ? cargoItems.find((item) => item.id === draggingCargoId)
+    : undefined;
+  const isActiveCargoDraggable = Boolean(activeCargo && !state.paused);
+  const clearDragState = useCallback(() => {
+    setDraggingCargoId(undefined);
+    setDragPoint(undefined);
+  }, []);
+  const handleDropOnTarget = useCallback(
+    (target: TargetId) => {
+      clearDragState();
+      dispatch({ type: 'drop-on-target', target });
+    },
+    [clearDragState]
+  );
+  const handleCargoDragStart = useCallback(
+    (cargoId: string) => {
+      if (cargoId === activeCargo?.id && !state.paused) {
+        setDraggingCargoId(cargoId);
+      }
+    },
+    [activeCargo?.id, state.paused]
+  );
+  const handleCargoPointerDragStart = useCallback(
+    (cargoId: string, point: DragPoint) => {
+      if (cargoId === activeCargo?.id && !state.paused) {
+        setDraggingCargoId(cargoId);
+        setDragPoint(point);
+      }
+    },
+    [activeCargo?.id, state.paused]
+  );
+
+  useEffect(() => {
+    if (!draggingCargoId) {
+      return;
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      setDragPoint({ x: event.clientX, y: event.clientY });
+    };
+    const handlePointerUp = (event: PointerEvent) => {
+      const target = readDropTargetFromPoint(event.clientX, event.clientY);
+
+      clearDragState();
+
+      if (target && draggingCargoId === activeCargo?.id && !state.paused) {
+        dispatch({ type: 'drop-on-target', target });
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    window.addEventListener('pointercancel', clearDragState);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+      window.removeEventListener('pointercancel', clearDragState);
+    };
+  }, [activeCargo?.id, clearDragState, draggingCargoId, state.paused]);
 
   return (
-    <main className="mission-board" aria-label="Space Cargo Sorter mission board">
+    <main
+      className={`mission-board${draggingCargoId ? ' mission-board--dragging' : ''}`}
+      aria-label="Space Cargo Sorter mission board"
+    >
       <header className="mission-topbar">
         <div className="mission-title">
           <p className="eyebrow">Teacher-led chemistry rescue</p>
@@ -58,6 +134,11 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
             <CargoCard
               cargo={activeCargo}
               state={state.damagedCargoIds.includes(activeCargo.id) ? 'damaged' : 'active'}
+              isDraggable={isActiveCargoDraggable}
+              isDragging={draggingCargoId === activeCargo.id}
+              onCargoDragStart={handleCargoDragStart}
+              onCargoDragEnd={clearDragState}
+              onCargoPointerDragStart={handleCargoPointerDragStart}
             />
           ) : (
             <p className="empty-state">Round complete.</p>
@@ -79,17 +160,20 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
           <DropBin
             kind="atom"
             activeCargoName={activeCargo?.displayName}
-            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+            isDragActive={Boolean(draggingCargoId)}
+            onDrop={handleDropOnTarget}
           />
           <DropBin
             kind="molecule"
             activeCargoName={activeCargo?.displayName}
-            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+            isDragActive={Boolean(draggingCargoId)}
+            onDrop={handleDropOnTarget}
           />
           <DropBin
             kind="mixture"
             activeCargoName={activeCargo?.displayName}
-            onDrop={(target) => dispatch({ type: 'drop-on-target', target })}
+            isDragActive={Boolean(draggingCargoId)}
+            onDrop={handleDropOnTarget}
           />
         </section>
 
@@ -176,6 +260,15 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
           </div>
         </section>
       </div>
+      {draggingCargo && dragPoint ? (
+        <div
+          className="drag-ghost"
+          aria-hidden="true"
+          style={{ left: dragPoint.x, top: dragPoint.y }}
+        >
+          {draggingCargo.formula ?? draggingCargo.displayName}
+        </div>
+      ) : null}
     </main>
   );
 }

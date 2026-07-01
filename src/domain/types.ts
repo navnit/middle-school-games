@@ -6,6 +6,8 @@ export type GameMode = 'practice' | 'rescue-rush';
 
 export type PlayStyle = 'co-op' | 'team-turns';
 
+export const CARGO_DRAG_MIME_TYPE = 'application/x-space-cargo-id';
+
 export type CargoKind = 'particle-diagram' | 'real-world' | 'hybrid';
 
 export type ParticleNodeKind = 'atom' | 'molecule' | 'ion' | 'mixture-component';

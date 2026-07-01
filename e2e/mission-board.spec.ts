@@ -29,6 +29,71 @@ test('Practice Mode reveal flow works', async ({ page }) => {
   await expect(page.locator('[data-cargo-state="active"][aria-label="Neon cargo"]')).toBeVisible();
 });
 
+test('Practice Mode drag and drop flow works', async ({ page }) => {
+  await page.goto('/');
+
+  await page
+    .locator('[data-cargo-state="active"][aria-label="Helium cargo"]')
+    .dragTo(page.getByRole('button', { name: 'Drop Helium into Atom' }));
+
+  await expect(page.getByRole('heading', { name: 'Class Check' })).toBeVisible();
+  await expect(page.getByText('Proposed bay: Atom')).toBeVisible();
+});
+
+test.describe('in-app browser viewport', () => {
+  test.use({ viewport: { width: 406, height: 912 } });
+
+  test('keeps the full board on screen and mode selection usable', async ({ page }) => {
+    await page.goto('/');
+
+    const modeSelect = page.getByLabel('Mode');
+    await expect(modeSelect).toBeInViewport({ ratio: 0.9 });
+
+    const metrics = await page.evaluate(() => {
+      const modeRect = document.querySelector('select')?.getBoundingClientRect();
+      const activeCargoRect = document
+        .querySelector('.cargo-panel > [data-cargo-state="active"]')
+        ?.getBoundingClientRect();
+      const queueRect = document.querySelector('.queue-panel')?.getBoundingClientRect();
+
+      return {
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        documentWidth: document.documentElement.scrollWidth,
+        documentHeight: document.documentElement.scrollHeight,
+        bodyHeight: document.body.scrollHeight,
+        modeRect: modeRect
+          ? {
+              top: modeRect.top,
+              bottom: modeRect.bottom
+            }
+          : null,
+        cargoStack:
+          activeCargoRect && queueRect
+            ? {
+                activeBottom: activeCargoRect.bottom,
+                queueTop: queueRect.top
+              }
+            : null
+      };
+    });
+
+    expect(metrics.modeRect).not.toBeNull();
+    expect(metrics.cargoStack).not.toBeNull();
+    expect(metrics.modeRect!.top).toBeGreaterThanOrEqual(0);
+    expect(metrics.modeRect!.bottom).toBeLessThanOrEqual(metrics.viewportHeight);
+    expect(metrics.cargoStack!.queueTop).toBeGreaterThanOrEqual(metrics.cargoStack!.activeBottom - 1);
+    expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+    expect(metrics.documentHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+    expect(metrics.bodyHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+
+    await modeSelect.selectOption('rescue-rush');
+
+    await expect(modeSelect).toHaveValue('rescue-rush');
+    await expect(page.getByLabel('Round status').getByText('Rescue Rush')).toBeVisible();
+  });
+});
+
 test('Rescue Rush damaged second try works', async ({ page }) => {
   await page.goto('/');
 

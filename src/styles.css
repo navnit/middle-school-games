@@ -24,6 +24,13 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -182,17 +189,17 @@ button {
 .cargo-card {
   width: 100%;
   min-width: 0;
-  min-height: 196px;
+  min-height: 164px;
   border: 2px solid #1f4fb8;
   border-radius: 8px;
   background: #ffffff;
   color: #111827;
   display: grid;
-  grid-template-rows: minmax(118px, 1fr) auto auto;
-  gap: 8px;
+  grid-template-rows: minmax(86px, 1fr) auto auto;
+  gap: 6px;
   justify-items: center;
   align-items: center;
-  padding: 14px;
+  padding: 12px;
   touch-action: manipulation;
   cursor: pointer;
   box-shadow: 0 8px 0 rgba(14, 76, 148, 0.14);
@@ -200,6 +207,16 @@ button {
 
 .cargo-card:hover {
   transform: translateY(-1px);
+}
+
+.cargo-card[data-draggable-cargo="true"] {
+  cursor: grab;
+  touch-action: none;
+}
+
+.mission-board--dragging .cargo-card[data-draggable-cargo="true"] {
+  cursor: grabbing;
+  opacity: 0.74;
 }
 
 .cargo-card:focus-visible,
@@ -354,6 +371,12 @@ button {
   transform: translateY(-1px);
 }
 
+.drop-bin--drag-active,
+.mission-board--dragging [data-drop-target] {
+  outline: 5px solid #facc15;
+  outline-offset: 4px;
+}
+
 .nested-bin strong {
   max-width: 100%;
   min-width: 0;
@@ -384,17 +407,20 @@ button {
 }
 
 .mission-board {
-  min-height: 100vh;
+  height: 100dvh;
+  min-height: 0;
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: 16px;
-  padding: 16px;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
 }
 
 .mission-topbar {
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(260px, 1.1fr) minmax(320px, 1.7fr) minmax(220px, 0.8fr);
-  gap: 14px;
+  grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.6fr) minmax(260px, 0.9fr);
+  gap: 10px;
   align-items: stretch;
 }
 
@@ -412,22 +438,27 @@ button {
 .mission-title {
   display: grid;
   align-content: center;
-  padding: 18px 20px;
+  padding: 10px 14px;
+}
+
+.mission-title .eyebrow {
+  margin-bottom: 6px;
+  font-size: 12px;
 }
 
 .mission-title h1 {
   margin: 0;
   color: var(--blue-dark);
-  font-size: 40px;
+  font-size: clamp(28px, 2.7vw, 34px);
   line-height: 1;
 }
 
 .mission-status {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  padding: 12px;
+  padding: 8px;
 }
 
 .mission-status span,
@@ -435,11 +466,11 @@ button {
 .score-panel strong {
   display: grid;
   min-width: 0;
-  min-height: 54px;
+  min-height: 44px;
   align-content: center;
   justify-content: center;
   border-radius: 8px;
-  padding: 8px 12px;
+  padding: 6px 8px;
   text-align: center;
   overflow-wrap: anywhere;
 }
@@ -448,7 +479,7 @@ button {
   border: 1px solid #b9d5f4;
   background: #eff7ff;
   color: var(--blue-dark);
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -460,41 +491,53 @@ button {
 
 .score-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   align-content: center;
-  padding: 10px;
+  padding: 8px;
 }
 
 .score-panel span {
   background: #ecfdf3;
   color: #126225;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 900;
 }
 
 .score-panel strong {
   background: #fff8e1;
   color: #8a5200;
-  font-size: 28px;
+  font-size: 20px;
   line-height: 1;
 }
 
 .mission-layout {
+  height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(236px, 300px) minmax(520px, 1fr) minmax(280px, 360px);
-  gap: 16px;
+  grid-template-columns: minmax(200px, 260px) minmax(430px, 1fr) minmax(250px, 310px);
+  gap: 10px;
   align-items: stretch;
+  overflow: hidden;
 }
 
 .cargo-panel,
 .feedback-panel {
   min-width: 0;
+  min-height: 0;
   display: grid;
-  align-content: start;
-  gap: 14px;
-  padding: 14px;
+  align-content: stretch;
+  gap: 10px;
+  padding: 10px;
+  overflow: hidden;
+}
+
+.cargo-panel {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.feedback-panel {
+  grid-template-rows: auto minmax(0, 1fr);
 }
 
 .panel-heading {
@@ -506,29 +549,32 @@ button {
 .feedback-card h2 {
   margin: 0;
   color: var(--blue-dark);
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1.1;
 }
 
 .queue-panel {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  min-height: 0;
 }
 
 .queue-list {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  min-height: 0;
 }
 
 .queue-list .cargo-card {
-  min-height: 128px;
-  grid-template-rows: minmax(60px, 1fr) auto auto;
-  padding: 10px;
+  min-height: 76px;
+  grid-template-rows: minmax(32px, 1fr) auto auto;
+  gap: 4px;
+  padding: 6px;
   box-shadow: none;
 }
 
 .queue-list .particle-diagram {
-  width: min(100%, 86px);
+  width: min(100%, 48px);
 }
 
 .queue-list .cargo-card__name {
@@ -542,10 +588,10 @@ button {
 
 .sorting-board {
   min-width: 0;
-  min-height: 620px;
+  min-height: 0;
   display: grid;
-  grid-template-columns: minmax(160px, 0.82fr) minmax(300px, 1.35fr) minmax(160px, 0.82fr);
-  gap: 14px;
+  grid-template-columns: minmax(130px, 0.82fr) minmax(250px, 1.35fr) minmax(130px, 0.82fr);
+  gap: 10px;
   align-items: stretch;
   border: 2px solid #b5c8de;
   border-radius: 8px;
@@ -553,23 +599,24 @@ button {
     linear-gradient(180deg, rgba(10, 53, 127, 0.86) 0 22%, rgba(242, 248, 255, 0.94) 22%),
     linear-gradient(90deg, #d5dde9, #f8fbff 20%, #edf3f9 80%, #cfd9e5);
   box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.72), var(--shadow);
-  padding: 120px 14px 26px;
+  padding: 56px 10px 12px;
   position: relative;
+  overflow: hidden;
 }
 
 .sorting-board::before {
   content: "Sort the Cargo";
   position: absolute;
-  top: 82px;
+  top: 42px;
   left: 50%;
   transform: translateX(-50%);
-  min-width: 220px;
+  min-width: 176px;
   border: 1px solid #b8cce1;
   border-radius: 8px;
   background: #f8fbff;
   color: var(--blue-dark);
-  padding: 10px 22px;
-  font-size: 18px;
+  padding: 6px 14px;
+  font-size: 14px;
   font-weight: 900;
   line-height: 1;
   text-align: center;
@@ -579,8 +626,8 @@ button {
 .sorting-board::after {
   content: "";
   position: absolute;
-  inset: 18px 11% auto;
-  height: 72px;
+  inset: 10px 11% auto;
+  height: 34px;
   border: 3px solid #83c5ff;
   border-radius: 8px;
   background:
@@ -592,16 +639,17 @@ button {
 }
 
 .sorting-board .drop-bin {
-  min-height: 460px;
+  min-height: 0;
 }
 
 .sorting-board .drop-bin--molecule {
-  min-height: 500px;
+  min-height: 0;
 }
 
 .teacher-controls {
   display: grid;
-  gap: 12px;
+  gap: 10px;
+  min-height: 0;
 }
 
 .teacher-controls__selects {
@@ -674,7 +722,9 @@ button {
 
 .feedback-stack {
   display: grid;
-  gap: 12px;
+  gap: 8px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .feedback-card {
@@ -683,7 +733,7 @@ button {
   border-left: 8px solid var(--blue);
   border-radius: 8px;
   background: #f8fbff;
-  padding: 14px;
+  padding: 10px;
 }
 
 .feedback-card p {
@@ -759,6 +809,24 @@ button {
   font-size: 15px;
 }
 
+.drag-ghost {
+  position: fixed;
+  z-index: 40;
+  transform: translate(-50%, -50%);
+  min-width: 70px;
+  border: 3px solid #1f4fb8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--blue-dark);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  pointer-events: none;
+  text-align: center;
+}
+
 .teacher-control select:focus-visible,
 .teacher-controls__buttons button:focus-visible,
 .repair-item button:focus-visible {
@@ -794,61 +862,327 @@ button {
 }
 
 @media (max-width: 1180px) {
-  .mission-topbar,
-  .mission-layout {
-    grid-template-columns: 1fr;
+  .mission-topbar {
+    grid-template-columns: minmax(0, 1fr) minmax(220px, 0.7fr);
+    grid-template-areas:
+      "title score"
+      "status status";
+  }
+
+  .mission-title {
+    grid-area: title;
   }
 
   .mission-status {
+    grid-area: status;
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  .score-panel {
+    grid-area: score;
+  }
+
+  .mission-layout {
+    grid-template-columns: minmax(190px, 0.44fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "cargo sorting"
+      "feedback feedback";
+  }
+
+  .cargo-panel {
+    grid-area: cargo;
+  }
+
   .sorting-board {
-    min-height: auto;
-    grid-template-columns: 1fr;
-    padding-top: 118px;
-  }
-
-  .sorting-board .drop-bin,
-  .sorting-board .drop-bin--molecule {
-    min-height: 260px;
-  }
-}
-
-@media (max-width: 720px) {
-  .mission-board {
-    padding: 10px;
-  }
-
-  .mission-title h1 {
-    font-size: 34px;
-  }
-
-  .mission-status {
-    grid-template-columns: 1fr;
-  }
-
-  .score-panel strong {
-    font-size: 24px;
-  }
-
-  .teacher-controls__buttons,
-  .repair-item {
-    grid-template-columns: 1fr;
-  }
-
-  .sorting-board::before {
-    top: 78px;
-    min-width: 190px;
-    font-size: 15px;
+    grid-area: sorting;
+    grid-template-columns: minmax(96px, 0.8fr) minmax(180px, 1.4fr) minmax(96px, 0.8fr);
   }
 
   .drop-bin strong,
   .drop-bin h2 {
-    font-size: 32px;
+    font-size: 24px;
   }
 
   .nested-bin strong {
-    font-size: 24px;
+    font-size: 13px;
+  }
+
+  .nested-bins {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .nested-bin {
+    min-height: 72px;
+    padding: 8px;
+  }
+
+  .feedback-panel {
+    grid-area: feedback;
+  }
+
+  .teacher-controls {
+    grid-template-columns: minmax(220px, 0.65fr) minmax(0, 1fr);
+    align-items: end;
+  }
+
+  .teacher-controls__selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .teacher-controls__buttons {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+}
+
+@media (max-width: 720px) {
+  .mission-board {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .mission-topbar {
+    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.42fr);
+    grid-template-areas:
+      "title score"
+      "status status";
+    gap: 6px;
+  }
+
+  .mission-title {
+    padding: 7px 8px;
+  }
+
+  .mission-title .eyebrow {
+    margin-bottom: 4px;
+    font-size: 9px;
+  }
+
+  .mission-title h1 {
+    font-size: clamp(22px, 6vw, 26px);
+  }
+
+  .mission-status {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .mission-status span,
+  .score-panel span,
+  .score-panel strong {
+    min-height: 30px;
+    border-radius: 6px;
+    padding: 4px;
+    font-size: 10px;
+    line-height: 1.05;
+  }
+
+  .score-panel {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 4px;
+  }
+
+  .score-panel strong {
+    font-size: 15px;
+  }
+
+  .mission-layout {
+    grid-template-columns: 1fr;
+    grid-template-rows: 174px 205px minmax(0, 1fr);
+    grid-template-areas:
+      "feedback"
+      "cargo"
+      "sorting";
+    gap: 8px;
+  }
+
+  .cargo-panel,
+  .feedback-panel {
+    padding: 7px;
+    gap: 6px;
+  }
+
+  .panel-heading .eyebrow {
+    display: none;
+  }
+
+  .panel-heading h2,
+  .queue-panel h3,
+  .feedback-card h2 {
+    font-size: 14px;
+  }
+
+  .cargo-card {
+    min-height: 116px;
+    grid-template-rows: minmax(56px, 1fr) auto auto;
+    gap: 3px;
+    padding: 6px;
+  }
+
+  .cargo-card .particle-diagram {
+    width: min(100%, 78px);
+  }
+
+  .cargo-card__name {
+    font-size: 14px;
+  }
+
+  .cargo-card__formula,
+  .cargo-card__status {
+    padding: 3px 7px;
+    font-size: 11px;
+  }
+
+  .queue-panel {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px;
+  }
+
+  .queue-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .queue-list .cargo-card {
+    min-height: 28px;
+    display: grid;
+    align-content: center;
+    padding: 4px;
+  }
+
+  .queue-list .cargo-card__diagram,
+  .queue-list .cargo-card__formula,
+  .queue-list .cargo-card__status {
+    display: none;
+  }
+
+  .queue-list .cargo-card__name {
+    font-size: 10px;
+    line-height: 1;
+  }
+
+  .teacher-controls {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    gap: 6px;
+  }
+
+  .teacher-controls__selects {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .teacher-control {
+    gap: 0;
+  }
+
+  .teacher-control span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .teacher-control select {
+    min-height: 44px;
+    padding: 0 8px;
+    font-size: 13px;
+  }
+
+  .teacher-controls__buttons {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .teacher-controls__buttons button {
+    min-height: 44px;
+    padding: 4px 2px;
+    font-size: 9px;
+    line-height: 1.05;
+  }
+
+  .repair-item {
+    grid-template-columns: 1fr;
+  }
+
+  .feedback-card {
+    border-left-width: 4px;
+    padding: 5px 6px;
+  }
+
+  .feedback-card p {
+    margin-top: 3px;
+    font-size: 10px;
+    line-height: 1.12;
+  }
+
+  .sorting-board {
+    grid-template-columns: minmax(66px, 0.82fr) minmax(128px, 1.55fr) minmax(66px, 0.82fr);
+    gap: 6px;
+    padding: 42px 6px 8px;
+  }
+
+  .sorting-board::before {
+    top: 30px;
+    min-width: 130px;
+    padding: 5px 8px;
+    font-size: 10px;
+  }
+
+  .sorting-board::after {
+    inset: 8px 10% auto;
+    height: 24px;
+    border-width: 2px;
+  }
+
+  .drop-bin {
+    min-height: 0;
+    border-width: 2px;
+    padding: 5px;
+  }
+
+  .drop-bin strong,
+  .drop-bin h2 {
+    font-size: clamp(15px, 4.6vw, 20px);
+  }
+
+  .drop-bin span,
+  .drop-bin p {
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.15;
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .nested-bins {
+    grid-template-columns: 1fr;
+    gap: 5px;
+    margin-top: 6px;
+  }
+
+  .nested-bin {
+    min-height: 58px;
+    padding: 4px;
+  }
+
+  .nested-bin strong {
+    font-size: 11px;
+    line-height: 1.05;
+  }
+
+  .nested-bin span {
+    max-width: 100%;
+    margin-top: 3px;
+    font-size: 9px;
+    line-height: 1.1;
   }
 }

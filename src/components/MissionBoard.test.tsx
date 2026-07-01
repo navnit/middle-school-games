@@ -1,10 +1,35 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CARGO_LIBRARY } from '../content/cargoLibrary';
 import { MissionBoard } from './MissionBoard';
 
 const initialCargoOrder = ['helium', 'ozone-o3'];
+
+function createDataTransfer(): DataTransfer {
+  const store = new Map<string, string>();
+
+  return {
+    dropEffect: 'move',
+    effectAllowed: 'all',
+    files: [] as unknown as FileList,
+    items: [] as unknown as DataTransferItemList,
+    types: [],
+    clearData: vi.fn((format?: string) => {
+      if (format) {
+        store.delete(format);
+        return;
+      }
+
+      store.clear();
+    }),
+    getData: vi.fn((format: string) => store.get(format) ?? ''),
+    setData: vi.fn((format: string, data: string) => {
+      store.set(format, data);
+    }),
+    setDragImage: vi.fn()
+  };
+}
 
 describe('MissionBoard', () => {
   it('uses Practice Mode class check before reveal and advances only after the teacher moves next', async () => {
@@ -75,5 +100,17 @@ describe('MissionBoard', () => {
     await user.click(screen.getByRole('button', { name: /Hint/i }));
 
     expect(screen.getByText(/Look for one unbonded particle/i)).toBeInTheDocument();
+  });
+
+  it('supports dragging active cargo onto a rescue bay', () => {
+    const dataTransfer = createDataTransfer();
+    render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
+
+    fireEvent.dragStart(screen.getByRole('article', { name: /Helium cargo/i }), { dataTransfer });
+    fireEvent.dragOver(screen.getByRole('button', { name: /Drop Helium into Atom/i }), { dataTransfer });
+    fireEvent.drop(screen.getByRole('button', { name: /Drop Helium into Atom/i }), { dataTransfer });
+
+    expect(screen.getByRole('heading', { name: /Class Check/i })).toBeInTheDocument();
+    expect(screen.getByText(/Proposed bay: Atom/i)).toBeInTheDocument();
   });
 });
