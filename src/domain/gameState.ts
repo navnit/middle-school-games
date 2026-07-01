@@ -143,6 +143,10 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'reveal':
       return handleReveal(state);
     case 'next-cargo':
+      if (state.mode !== 'practice' || state.phase !== 'revealed') {
+        return state;
+      }
+
       return withHistory(state, advanceToNextCargo(clearCargoFeedback(state)));
     case 'mark-repaired':
       return handleMarkRepaired(state, action.cargoId);

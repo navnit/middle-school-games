@@ -33,6 +33,53 @@ describe('gameReducer', () => {
     expect(getActiveCargo(advanced)?.id).toBe('ozone-o3');
   });
 
+  it('does not advance or lose cargo when next-cargo is dispatched from ready', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const next = gameReducer(state, { type: 'next-cargo' });
+
+    expect(next.activeCargoId).toBe('helium');
+    expect(next.activeIndex).toBe(0);
+    expect(next.phase).toBe('ready');
+    expect(next.rescuedCargoIds).toEqual([]);
+    expect(next.history).toEqual([]);
+  });
+
+  it('does not advance when next-cargo is dispatched from class-check before reveal', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const checked = gameReducer(state, { type: 'drop-on-target', target: 'atom' });
+    const next = gameReducer(checked, { type: 'next-cargo' });
+
+    expect(next.activeCargoId).toBe('helium');
+    expect(next.activeIndex).toBe(0);
+    expect(next.phase).toBe('class-check');
+    expect(next.classCheck).toMatchObject({ cargoId: 'helium' });
+    expect(next.rescuedCargoIds).toEqual([]);
+  });
+
+  it('intentionally resolves a wrong Practice drop after reveal and advances after next-cargo', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const checked = gameReducer(state, { type: 'drop-on-target', target: 'mixture' });
+    const revealed = gameReducer(checked, { type: 'reveal' });
+    const advanced = gameReducer(revealed, { type: 'next-cargo' });
+
+    expect(checked.classCheck?.result.isCorrect).toBe(false);
+    expect(revealed.phase).toBe('revealed');
+    expect(revealed.revealed).toMatchObject({ cargoId: 'helium', isCorrect: false });
+    expect(revealed.rescuedCargoIds).toEqual(['helium']);
+    expect(advanced.activeCargoId).toBe('ozone-o3');
+  });
+
+  it('does not skip active Rescue Rush cargo when next-cargo is dispatched directly', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
+    const next = gameReducer(state, { type: 'next-cargo' });
+
+    expect(next.activeCargoId).toBe('helium');
+    expect(next.activeIndex).toBe(0);
+    expect(next.phase).toBe('ready');
+    expect(next.rescuedCargoIds).toEqual([]);
+    expect(next.repairDockCargoIds).toEqual([]);
+  });
+
   it('scores first-try Rescue Rush drops at 100 points and advances', () => {
     const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
     const next = gameReducer(state, { type: 'drop-on-target', target: 'atom' });
@@ -86,6 +133,18 @@ describe('gameReducer', () => {
     expect(repaired.rescuedCargoIds).toEqual(['helium']);
   });
 
+  it('undo after mark-repaired restores the Repair Dock entry', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
+    const damaged = gameReducer(state, { type: 'drop-on-target', target: 'mixture' });
+    const repairDock = gameReducer(damaged, { type: 'drop-on-target', target: 'compound-molecule' });
+    const repaired = gameReducer(repairDock, { type: 'mark-repaired', cargoId: 'helium' });
+    const undone = gameReducer(repaired, { type: 'undo' });
+
+    expect(undone.repairDockCargoIds).toEqual(['helium']);
+    expect(undone.rescuedCargoIds).toEqual([]);
+    expect(undone.activeCargoId).toBe('ozone-o3');
+  });
+
   it('tracks Alpha and Beta team scoring and switch-team changes the current team', () => {
     const state = createInitialGameState(CARGO_LIBRARY, {
       cargoOrder,
@@ -122,5 +181,49 @@ describe('gameReducer', () => {
     expect(undone.scores.Alpha).toBe(0);
     expect(undone.rescuedCargoIds).toEqual([]);
     expect(undone.history).toEqual([]);
+  });
+
+  it('undo after reveal and next-cargo restores the revealed active cargo state', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const checked = gameReducer(state, { type: 'drop-on-target', target: 'atom' });
+    const revealed = gameReducer(checked, { type: 'reveal' });
+    const advanced = gameReducer(revealed, { type: 'next-cargo' });
+    const undone = gameReducer(advanced, { type: 'undo' });
+
+    expect(undone.activeCargoId).toBe('helium');
+    expect(undone.phase).toBe('revealed');
+    expect(undone.revealed).toMatchObject({ cargoId: 'helium', isCorrect: true });
+    expect(undone.rescuedCargoIds).toEqual(['helium']);
+  });
+
+  it('undo after mode change restores the previous mode and state', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const hinted = gameReducer(state, { type: 'show-hint' });
+    const rescueRush = gameReducer(hinted, { type: 'set-mode', mode: 'rescue-rush' });
+    const undone = gameReducer(rescueRush, { type: 'undo' });
+
+    expect(rescueRush.mode).toBe('rescue-rush');
+    expect(rescueRush.hintedCargoId).toBeUndefined();
+    expect(undone.mode).toBe('practice');
+    expect(undone.activeCargoId).toBe('helium');
+    expect(undone.hintedCargoId).toBe('helium');
+  });
+
+  it('blocks gameplay actions while paused and resumes with toggle-pause', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const paused = gameReducer(state, { type: 'toggle-pause' });
+    const afterDrop = gameReducer(paused, { type: 'drop-on-target', target: 'atom' });
+    const afterHint = gameReducer(afterDrop, { type: 'show-hint' });
+    const afterNextCargo = gameReducer(afterHint, { type: 'next-cargo' });
+    const resumed = gameReducer(afterNextCargo, { type: 'toggle-pause' });
+    const checked = gameReducer(resumed, { type: 'drop-on-target', target: 'atom' });
+
+    expect(paused.paused).toBe(true);
+    expect(afterDrop).toBe(paused);
+    expect(afterHint).toBe(paused);
+    expect(afterNextCargo).toBe(paused);
+    expect(resumed.paused).toBe(false);
+    expect(checked.phase).toBe('class-check');
+    expect(checked.activeCargoId).toBe('helium');
   });
 });
