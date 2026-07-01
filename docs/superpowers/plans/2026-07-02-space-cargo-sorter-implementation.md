@@ -10,6 +10,12 @@
 
 ---
 
+## Visual Reference
+
+Use `docs/superpowers/assets/space-cargo-sorter-concept.png` as the visual reference for the v1 Mission Board. It establishes the intended feel: bright space cargo bay, large classroom-readable targets, crisp particle diagrams, functional side panels, blue/green/orange accents, and a nested molecule bay in the center.
+
+The approved spec and this plan remain the source of truth for exact copy, cargo order, scoring, and behavior. Do not implement concept-only filler such as a teacher profile name, robot lore, or extra story text unless it is also required by the plan. Preserve the concept's layout hierarchy, palette direction, and touch-target scale while keeping visible text aligned to the approved game requirements.
+
 ## File Structure
 
 - Create `package.json`: npm scripts and dependencies.
