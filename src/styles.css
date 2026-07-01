@@ -309,7 +309,8 @@ button {
   font-size: 40px;
   font-weight: 900;
   line-height: 1.05;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .drop-bin span,
@@ -357,7 +358,8 @@ button {
   max-width: 100%;
   min-width: 0;
   font-size: 28px;
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 
 .nested-bin span {
@@ -762,6 +764,33 @@ button {
 .repair-item button:focus-visible {
   outline: 4px solid var(--yellow);
   outline-offset: 3px;
+}
+
+@media (max-width: 1400px) {
+  .mission-layout {
+    grid-template-columns: minmax(220px, 260px) minmax(0, 1fr) minmax(260px, 300px);
+  }
+
+  .sorting-board {
+    grid-template-columns: minmax(120px, 0.8fr) minmax(240px, 1.35fr) minmax(120px, 0.8fr);
+  }
+
+  .drop-bin strong,
+  .drop-bin h2 {
+    font-size: 30px;
+  }
+
+  .nested-bin strong {
+    font-size: 15px;
+  }
+
+  .nested-bin span {
+    font-size: 14px;
+  }
+
+  .nested-bin {
+    padding: 10px;
+  }
 }
 
 @media (max-width: 1180px) {
