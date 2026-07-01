@@ -31,4 +31,13 @@ describe('CargoCard', () => {
 
     expect(onSelect).toHaveBeenCalledWith('lemonade');
   });
+
+  it('renders display-only cargo without a dead button', () => {
+    const helium = CARGO_LIBRARY.find((item) => item.id === 'helium')!;
+
+    render(<CargoCard cargo={helium} state="queued" />);
+
+    expect(screen.getByRole('article', { name: /Helium cargo/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Select Helium cargo/i })).not.toBeInTheDocument();
+  });
 });

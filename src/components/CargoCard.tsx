@@ -16,21 +16,38 @@ const STATUS_LABELS: Partial<Record<CargoCardState, string>> = {
 
 export function CargoCard({ cargo, state, onSelect }: CargoCardProps) {
   const statusLabel = STATUS_LABELS[state];
-
-  return (
-    <button
-      type="button"
-      className={`cargo-card cargo-card--${state}`}
-      data-cargo-state={state}
-      onClick={() => onSelect?.(cargo.id)}
-      aria-label={`Select ${cargo.displayName} cargo`}
-    >
+  const cardContent = (
+    <>
       <span className="cargo-card__diagram">
         <ParticleDiagram diagram={cargo.diagram} title={`${cargo.displayName} particle diagram`} />
       </span>
       <span className="cargo-card__name">{cargo.displayName}</span>
       {cargo.formula ? <span className="cargo-card__formula">{cargo.formula}</span> : null}
       {statusLabel ? <span className="cargo-card__status">{statusLabel}</span> : null}
+    </>
+  );
+
+  if (!onSelect) {
+    return (
+      <article
+        className={`cargo-card cargo-card--${state}`}
+        data-cargo-state={state}
+        aria-label={`${cargo.displayName} cargo`}
+      >
+        {cardContent}
+      </article>
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className={`cargo-card cargo-card--${state}`}
+      data-cargo-state={state}
+      onClick={() => onSelect(cargo.id)}
+      aria-label={`Select ${cargo.displayName} cargo`}
+    >
+      {cardContent}
     </button>
   );
 }
