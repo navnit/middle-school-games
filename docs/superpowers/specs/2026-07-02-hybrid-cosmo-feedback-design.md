@@ -73,9 +73,33 @@ Cosmo needs:
 - A speech or communication panel that can hold one short headline and one short supporting sentence.
 - Tone states for `ready`, `practice`, `hint`, `class-check`, `success`, `warning`, `repair`, `paused`, and `complete`.
 - Accessible text that mirrors the visual message.
-- Reduced-motion-safe animation for state changes, such as a quick pulse on hint, warning, or success.
+- Reduced-motion-safe animation for idle presence and state changes.
 
 Cosmo should not create long narration. The messages should stay short enough to read from a touchscreen distance.
+
+## Cosmo Animation
+
+Cosmo should feel alive without distracting from the chemistry task.
+
+Animation states:
+
+- `ready`: gentle idle bob and occasional blink.
+- `practice`: slow attentive bob while Cosmo is listening for evidence.
+- `hint`: communication panel pulse plus a small antenna glow.
+- `class-check`: subtle listening tilt or beacon pulse.
+- `success`: quick celebratory bounce.
+- `warning`: short shake or red/orange beacon flash.
+- `repair`: slower caution pulse.
+- `paused`: idle animation stops or becomes extremely subtle.
+- `complete`: brief success bounce, then calm idle.
+
+Animation rules:
+
+- Use CSS animations and state classes; do not add a physics or animation library.
+- Keep continuous idle motion small enough for a classroom board.
+- Strong animation should happen only on state changes such as hint, wrong drop, repair, success, or complete.
+- Respect `prefers-reduced-motion: reduce` by disabling bob, shake, bounce, and pulse animations while preserving static tone colors.
+- Avoid motion that changes layout dimensions or causes bins, controls, or cargo cards to shift.
 
 ## Teacher Controls
 
@@ -113,6 +137,7 @@ Expected implementation boundaries:
 
 - `src/components/CosmoCoach.tsx`: large avatar plus feedback panel.
 - `src/components/CosmoCoach.test.tsx`: rendering and state-copy tests.
+- `src/components/CosmoCoach` CSS classes: state-driven animation hooks for idle, hint, success, warning, repair, paused, and complete.
 - `src/components/CargoBelt.tsx`: compact Rescue Rush queue presentation.
 - `src/components/MissionBoard.tsx`: mode-specific layout wiring.
 - `src/components/TeacherControls.tsx`: command dock labels and layout support.
@@ -142,6 +167,7 @@ The board should not be dominated by empty space. The bins can be compact as lon
 Unit tests should cover:
 
 - Cosmo feedback copy for Practice initial, class-check, hint, correct reveal, wrong reveal, Rescue Rush ready, damaged, repair, paused, and complete states.
+- Cosmo state class output for animated tones, including hint, warning, success, paused, and complete.
 - Command label changes, especially `Ask For Evidence` in Practice Mode.
 - Cargo belt renders upcoming cargo without changing cargo order or classification behavior.
 
@@ -150,6 +176,7 @@ Browser tests should cover:
 - In Practice Mode, Cosmo is prominent and asks for evidence before reveal.
 - In Rescue Rush, active cargo is visually inside or immediately above the rescue board.
 - Cosmo warning appears after a wrong Rescue Rush drop.
+- Cosmo keeps a stable box while animated so board elements do not shift.
 - The board still fits without document scroll in the existing viewport set.
 - Key labels fit inside Cosmo panel, command dock, bins, and cargo belt.
 
