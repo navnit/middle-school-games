@@ -8,6 +8,7 @@ interface TeacherControlsProps {
   canReveal: boolean;
   canAdvance: boolean;
   canUndo: boolean;
+  guidanceLabel?: string;
   onModeChange: (mode: GameMode) => void;
   onPlayStyleChange: (playStyle: PlayStyle) => void;
   onHint: () => void;
@@ -26,6 +27,7 @@ export function TeacherControls({
   canReveal,
   canAdvance,
   canUndo,
+  guidanceLabel,
   onModeChange,
   onPlayStyleChange,
   onHint,
@@ -35,6 +37,8 @@ export function TeacherControls({
   onPause,
   onSwitchTeam
 }: TeacherControlsProps) {
+  const guidanceText = guidanceLabel?.trim();
+
   return (
     <aside className="teacher-controls" aria-label="Teacher controls">
       <div className="teacher-controls__selects">
@@ -54,6 +58,8 @@ export function TeacherControls({
           </select>
         </label>
       </div>
+
+      {guidanceText ? <strong className="teacher-controls__guidance">{guidanceText}</strong> : null}
 
       <div className="teacher-controls__buttons">
         <button type="button" onClick={onHint} disabled={!canHint}>
