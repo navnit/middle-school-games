@@ -32,6 +32,15 @@ function createDataTransfer(): DataTransfer {
 }
 
 describe('MissionBoard', () => {
+  it('shows the Practice Mode evidence command and Cosmo guidance', () => {
+    render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
+
+    expect(screen.getByText(/Ask For Evidence/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Cosmo coach/i })).toHaveTextContent(
+      /Cosmo is listening for evidence/i
+    );
+  });
+
   it('uses Practice Mode class check before reveal and advances only after the teacher moves next', async () => {
     const user = userEvent.setup();
     render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
@@ -43,7 +52,7 @@ describe('MissionBoard', () => {
 
     await user.click(screen.getByRole('button', { name: /Reveal/i }));
 
-    expect(screen.getByText(/Helium is an atom/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Helium is an atom/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Correct bay: Atom/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Next Cargo/i }));
@@ -67,23 +76,37 @@ describe('MissionBoard', () => {
     expect(screen.getByText('O3')).toBeInTheDocument();
   });
 
-  it('shows the Rescue Rush mascot, clock, and progress HUD', async () => {
+  it('shows Cosmo coach, clock, and progress HUD in Rescue Rush', async () => {
     const user = userEvent.setup();
     render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
 
     await user.selectOptions(screen.getByLabelText(/Mode/i), 'rescue-rush');
 
     expect(screen.getByLabelText(/Mission clock/i)).toHaveTextContent('01:30');
-    expect(screen.getByRole('region', { name: /Rescue mascot/i })).toBeInTheDocument();
-    expect(screen.getByText(/Cosmo is ready/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Cosmo coach/i })).toHaveTextContent(/Cosmo says: ready/i);
+    expect(screen.getByRole('region', { name: /Cargo belt/i })).toBeInTheDocument();
     expect(screen.getByText(/Saved 0\/2/i)).toBeInTheDocument();
     expect(screen.getByText(/Damaged 0/i)).toBeInTheDocument();
     expect(screen.getByText(/Repair Dock 0/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Drop Helium into Mixture/i }));
 
-    expect(screen.getByText(/Cosmo says: second try/i)).toBeInTheDocument();
+    expect(screen.getByRole('region', { name: /Cosmo coach/i })).toHaveTextContent(/Cargo damaged/i);
+    expect(screen.getByRole('region', { name: /Cosmo coach/i })).toHaveAttribute(
+      'data-cosmo-tone',
+      'warning'
+    );
     expect(screen.getByText(/Damaged 1/i)).toBeInTheDocument();
+  });
+
+  it('places active cargo inside the Rescue Rush board', async () => {
+    const user = userEvent.setup();
+    render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
+
+    await user.selectOptions(screen.getByLabelText(/Mode/i), 'rescue-rush');
+
+    const rescueBoard = screen.getByRole('region', { name: /Rescue bays/i });
+    expect(within(rescueBoard).getByLabelText(/Helium cargo/i)).toBeInTheDocument();
   });
 
   it('moves cargo to the Repair Dock after two Rescue Rush mistakes and can mark it repaired', async () => {
@@ -118,7 +141,7 @@ describe('MissionBoard', () => {
 
     await user.click(screen.getByRole('button', { name: /Hint/i }));
 
-    expect(screen.getByText(/Look for one unbonded particle/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Look for one unbonded particle/i).length).toBeGreaterThan(0);
   });
 
   it('supports dragging active cargo onto a rescue bay', () => {
@@ -130,6 +153,6 @@ describe('MissionBoard', () => {
     fireEvent.drop(screen.getByRole('button', { name: /Drop Helium into Atom/i }), { dataTransfer });
 
     expect(screen.getByRole('heading', { name: /Class Check/i })).toBeInTheDocument();
-    expect(screen.getByText(/Proposed bay: Atom/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Proposed bay: Atom/i).length).toBeGreaterThan(0);
   });
 });

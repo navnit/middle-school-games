@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { getCosmoFeedback } from '../domain/cosmoFeedback';
 import { createInitialGameState, gameReducer, getActiveCargo } from '../domain/gameState';
 import type { CargoItem, TargetId } from '../domain/types';
 import { TARGET_LABELS } from '../domain/types';
+import { CargoBelt } from './CargoBelt';
 import type { DragPoint } from './CargoCard';
 import { CargoCard } from './CargoCard';
+import { CosmoCoach } from './CosmoCoach';
 import { DropBin } from './DropBin';
-import { RescueMascot } from './RescueMascot';
 import { TeacherControls } from './TeacherControls';
 
 interface MissionBoardProps {
@@ -31,48 +33,6 @@ function formatMissionClock(secondsRemaining: number): string {
   return `${minutes}:${seconds}`;
 }
 
-function getRescueMascotTone(
-  mode: string,
-  phase: string,
-  paused: boolean,
-  isActiveCargoDamaged: boolean
-) {
-  if (paused) {
-    return 'paused';
-  }
-
-  if (phase === 'round-complete') {
-    return 'complete';
-  }
-
-  if (mode === 'practice') {
-    return 'practice';
-  }
-
-  return isActiveCargoDamaged ? 'warning' : 'ready';
-}
-
-function getRescueMascotMessage(
-  mode: string,
-  phase: string,
-  paused: boolean,
-  isActiveCargoDamaged: boolean
-): string {
-  if (paused) {
-    return 'Cosmo says: paused';
-  }
-
-  if (phase === 'round-complete') {
-    return 'Cosmo says: mission complete';
-  }
-
-  if (mode === 'practice') {
-    return 'Cosmo is listening for evidence';
-  }
-
-  return isActiveCargoDamaged ? 'Cosmo says: second try' : 'Cosmo is ready';
-}
-
 export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProps) {
   const initialState = useMemo(
     () => createInitialGameState(cargoItems, { cargoOrder: initialCargoOrder }),
@@ -95,20 +55,10 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
   const draggingCargo = draggingCargoId
     ? cargoItems.find((item) => item.id === draggingCargoId)
     : undefined;
-  const isActiveCargoDamaged = Boolean(activeCargo && state.damagedCargoIds.includes(activeCargo.id));
   const isActiveCargoDraggable = Boolean(activeCargo && !state.paused);
-  const mascotTone = getRescueMascotTone(
-    state.mode,
-    state.phase,
-    state.paused,
-    isActiveCargoDamaged
-  );
-  const mascotMessage = getRescueMascotMessage(
-    state.mode,
-    state.phase,
-    state.paused,
-    isActiveCargoDamaged
-  );
+  const isRescueRush = state.mode === 'rescue-rush';
+  const cosmoFeedback = getCosmoFeedback(state, activeCargo);
+  const guidanceLabel = isRescueRush ? 'Rescue Commands' : 'Ask For Evidence';
   const clearDragState = useCallback(() => {
     setDraggingCargoId(undefined);
     setDragPoint(undefined);
@@ -183,7 +133,7 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
 
   return (
     <main
-      className={`mission-board${draggingCargoId ? ' mission-board--dragging' : ''}`}
+      className={`mission-board mission-board--${state.mode}${draggingCargoId ? ' mission-board--dragging' : ''}`}
       aria-label="Space Cargo Sorter mission board"
     >
       <header className="mission-topbar">
@@ -215,7 +165,7 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
             <h2 id="active-cargo-title">Active Cargo</h2>
           </div>
 
-          {activeCargo ? (
+          {activeCargo && !isRescueRush ? (
             <CargoCard
               cargo={activeCargo}
               state={state.damagedCargoIds.includes(activeCargo.id) ? 'damaged' : 'active'}
@@ -225,24 +175,41 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
               onCargoDragEnd={clearDragState}
               onCargoPointerDragStart={handleCargoPointerDragStart}
             />
+          ) : isRescueRush ? (
+            <CargoBelt cargoItems={queuedCargo} />
           ) : (
             <p className="empty-state">Round complete.</p>
           )}
 
-          <div className="queue-panel" aria-label="Upcoming cargo">
-            <h3>Up Next</h3>
-            <div className="queue-list">
-              {queuedCargo.length > 0 ? (
-                queuedCargo.map((cargo) => <CargoCard key={cargo.id} cargo={cargo} state="queued" />)
-              ) : (
-                <p className="empty-state empty-state--compact">No more cargo queued.</p>
-              )}
+          {!isRescueRush ? (
+            <div className="queue-panel" aria-label="Upcoming cargo">
+              <h3>Up Next</h3>
+              <div className="queue-list">
+                {queuedCargo.length > 0 ? (
+                  queuedCargo.map((cargo) => <CargoCard key={cargo.id} cargo={cargo} state="queued" />)
+                ) : (
+                  <p className="empty-state empty-state--compact">No more cargo queued.</p>
+                )}
+              </div>
             </div>
-          </div>
+          ) : null}
         </section>
 
         <section className="sorting-board" aria-label="Rescue bays">
-          <RescueMascot message={mascotMessage} tone={mascotTone} />
+          <CosmoCoach feedback={cosmoFeedback} />
+          {activeCargo && isRescueRush ? (
+            <div className="sorting-board__active-cargo">
+              <CargoCard
+                cargo={activeCargo}
+                state={state.damagedCargoIds.includes(activeCargo.id) ? 'damaged' : 'active'}
+                isDraggable={isActiveCargoDraggable}
+                isDragging={draggingCargoId === activeCargo.id}
+                onCargoDragStart={handleCargoDragStart}
+                onCargoDragEnd={clearDragState}
+                onCargoPointerDragStart={handleCargoPointerDragStart}
+              />
+            </div>
+          ) : null}
           <DropBin
             kind="atom"
             activeCargoName={activeCargo?.displayName}
@@ -272,6 +239,7 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
             canReveal={state.phase === 'class-check'}
             canAdvance={state.phase === 'revealed'}
             canUndo={state.history.length > 0}
+            guidanceLabel={guidanceLabel}
             onModeChange={(mode) => dispatch({ type: 'set-mode', mode })}
             onPlayStyleChange={(playStyle) => dispatch({ type: 'set-play-style', playStyle })}
             onHint={() => dispatch({ type: 'show-hint' })}
