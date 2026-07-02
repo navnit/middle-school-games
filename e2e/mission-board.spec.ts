@@ -1,4 +1,118 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+type LayoutBox = {
+  top: number;
+  bottom: number;
+  left: number;
+  right: number;
+  width: number;
+  height: number;
+};
+
+type RescueLayoutMetrics = {
+  viewportWidth: number;
+  viewportHeight: number;
+  documentWidth: number;
+  documentHeight: number;
+  bodyHeight: number;
+  board: LayoutBox;
+  cosmo: LayoutBox;
+  boardCargo: LayoutBox;
+  atom: LayoutBox;
+  molecule: LayoutBox;
+  mixture: LayoutBox;
+};
+
+type RescueLayoutKey = keyof Pick<
+  RescueLayoutMetrics,
+  'board' | 'cosmo' | 'boardCargo' | 'atom' | 'molecule' | 'mixture'
+>;
+
+const rescueLayoutKeys: RescueLayoutKey[] = ['board', 'cosmo', 'boardCargo', 'atom', 'molecule', 'mixture'];
+
+async function readRescueLayoutMetrics(page: Page): Promise<RescueLayoutMetrics> {
+  return page.evaluate(() => {
+    const readBox = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        throw new Error(`Missing ${selector}`);
+      }
+      const rect = element.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height
+      };
+    };
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      documentWidth: document.documentElement.scrollWidth,
+      documentHeight: document.documentElement.scrollHeight,
+      bodyHeight: document.body.scrollHeight,
+      board: readBox('.sorting-board'),
+      cosmo: readBox('.cosmo-coach'),
+      boardCargo: readBox('.sorting-board__active-cargo'),
+      atom: readBox('.drop-bin--atom'),
+      molecule: readBox('.drop-bin--molecule'),
+      mixture: readBox('.drop-bin--mixture')
+    };
+  });
+}
+
+function firstRescueBinTop(metrics: RescueLayoutMetrics) {
+  return Math.min(metrics.atom.top, metrics.molecule.top, metrics.mixture.top);
+}
+
+function expectActiveCargoAboveBins(metrics: RescueLayoutMetrics, gap = 4) {
+  expect(metrics.boardCargo.bottom).toBeLessThanOrEqual(firstRescueBinTop(metrics) - gap);
+}
+
+function expectRescueBinsInsideBoardAndViewport(metrics: RescueLayoutMetrics) {
+  for (const key of ['atom', 'molecule', 'mixture'] as const) {
+    const box = metrics[key];
+    expect(box.top, `${key} top should stay inside board`).toBeGreaterThanOrEqual(metrics.board.top - 1);
+    expect(box.bottom, `${key} bottom should stay inside board`).toBeLessThanOrEqual(metrics.board.bottom + 1);
+    expect(box.left, `${key} left should stay inside viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.right, `${key} right should stay inside viewport`).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+    expect(box.top, `${key} top should stay inside viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.bottom, `${key} bottom should stay inside viewport`).toBeLessThanOrEqual(metrics.viewportHeight + 1);
+  }
+}
+
+function expectLayoutStable(before: RescueLayoutMetrics, after: RescueLayoutMetrics) {
+  for (const key of rescueLayoutKeys) {
+    const beforeBox = before[key];
+    const afterBox = after[key];
+    const sizeTolerance = key === 'cosmo' || key === 'boardCargo' ? 18 : 8;
+    expect(Math.abs(afterBox.left - beforeBox.left), `${key} left shift`).toBeLessThanOrEqual(8);
+    expect(Math.abs(afterBox.top - beforeBox.top), `${key} top shift`).toBeLessThanOrEqual(8);
+    expect(Math.abs(afterBox.width - beforeBox.width), `${key} width shift`).toBeLessThanOrEqual(sizeTolerance);
+    expect(Math.abs(afterBox.height - beforeBox.height), `${key} height shift`).toBeLessThanOrEqual(sizeTolerance);
+  }
+}
+
+async function expectShortMobileRescueRushLayout(page: Page) {
+  await page.goto('/');
+  await page.getByLabel('Mode').selectOption('rescue-rush');
+
+  const metrics = await readRescueLayoutMetrics(page);
+
+  for (const key of rescueLayoutKeys) {
+    const box = metrics[key];
+    expect(box.top, `${key} top should stay in viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.bottom, `${key} bottom should stay in viewport`).toBeLessThanOrEqual(metrics.viewportHeight + 1);
+  }
+
+  expectActiveCargoAboveBins(metrics);
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  expect(metrics.documentHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+  expect(metrics.bodyHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+}
 
 test('renders classroom board with nested molecule bins', async ({ page }) => {
   await page.goto('/');
@@ -42,6 +156,16 @@ test('Practice Mode drag and drop flow works', async ({ page }) => {
   await expect(
     page.getByRole('region', { name: 'Feedback and teacher panel' }).getByText('Proposed bay: Atom')
   ).toBeVisible();
+});
+
+test('Cosmo Rescue Rush layout keeps active cargo separated from bins', async ({ page }) => {
+  await page.goto('/');
+  await page.getByLabel('Mode').selectOption('rescue-rush');
+
+  const metrics = await readRescueLayoutMetrics(page);
+
+  expectActiveCargoAboveBins(metrics);
+  expectRescueBinsInsideBoardAndViewport(metrics);
 });
 
 test.describe('in-app browser viewport', () => {
@@ -101,37 +225,13 @@ test.describe('in-app browser viewport', () => {
     await page.goto('/');
     await page.getByLabel('Mode').selectOption('rescue-rush');
 
-    const metrics = await page.evaluate(() => {
-      const readBox = (selector: string) => {
-        const element = document.querySelector(selector);
-        if (!element) {
-          throw new Error(`Missing ${selector}`);
-        }
-        const rect = element.getBoundingClientRect();
-        return {
-          top: rect.top,
-          bottom: rect.bottom,
-          left: rect.left,
-          right: rect.right,
-          width: rect.width,
-          height: rect.height
-        };
-      };
-
-      return {
-        board: readBox('.sorting-board'),
-        cosmo: readBox('.cosmo-coach'),
-        boardCargo: readBox('.sorting-board__active-cargo'),
-        atom: readBox('.drop-bin--atom'),
-        molecule: readBox('.drop-bin--molecule'),
-        mixture: readBox('.drop-bin--mixture')
-      };
-    });
+    const metrics = await readRescueLayoutMetrics(page);
 
     const maxBinHeight = metrics.board.height * 0.55;
     expect(metrics.cosmo.height).toBeGreaterThanOrEqual(92);
     expect(metrics.cosmo.width).toBeGreaterThanOrEqual(220);
     expect(metrics.boardCargo.top).toBeGreaterThanOrEqual(metrics.cosmo.bottom - 4);
+    expectActiveCargoAboveBins(metrics);
     expect(metrics.atom.height).toBeLessThanOrEqual(maxBinHeight);
     expect(metrics.molecule.height).toBeLessThanOrEqual(maxBinHeight);
     expect(metrics.mixture.height).toBeLessThanOrEqual(maxBinHeight);
@@ -141,15 +241,17 @@ test.describe('in-app browser viewport', () => {
     await page.goto('/');
     await page.getByLabel('Mode').selectOption('rescue-rush');
 
-    const before = await page.locator('.cosmo-coach').boundingBox();
+    const before = await readRescueLayoutMetrics(page);
+    expectActiveCargoAboveBins(before);
+    expectRescueBinsInsideBoardAndViewport(before);
+
     await page.getByRole('button', { name: 'Drop Helium into Mixture' }).click();
     await expect(page.getByRole('region', { name: 'Cosmo coach' })).toHaveText(/Cargo damaged/i);
-    const after = await page.locator('.cosmo-coach').boundingBox();
+    const after = await readRescueLayoutMetrics(page);
 
-    expect(before).not.toBeNull();
-    expect(after).not.toBeNull();
-    expect(Math.abs(after!.width - before!.width)).toBeLessThanOrEqual(2);
-    expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(18);
+    expectActiveCargoAboveBins(after);
+    expectRescueBinsInsideBoardAndViewport(after);
+    expectLayoutStable(before, after);
   });
 
   test('Cosmo respects reduced motion preference', async ({ page }) => {
@@ -162,6 +264,22 @@ test.describe('in-app browser viewport', () => {
       .evaluate((element) => getComputedStyle(element).animationName);
 
     expect(animationName).toBe('none');
+  });
+});
+
+test.describe('short mobile Rescue Rush viewport', () => {
+  test.use({ viewport: { width: 360, height: 640 } });
+
+  test('short mobile keeps Cosmo, active cargo, and rescue bins in view without page scroll', async ({ page }) => {
+    await expectShortMobileRescueRushLayout(page);
+  });
+});
+
+test.describe('extra short mobile Rescue Rush viewport', () => {
+  test.use({ viewport: { width: 320, height: 568 } });
+
+  test('short mobile 320x568 keeps Rescue Rush board usable without page scroll', async ({ page }) => {
+    await expectShortMobileRescueRushLayout(page);
   });
 });
 

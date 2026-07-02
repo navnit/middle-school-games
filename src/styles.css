@@ -680,7 +680,7 @@ button {
 }
 
 .mission-board--rescue-rush .sorting-board {
-  grid-template-rows: auto minmax(112px, 0.58fr) minmax(0, 1fr);
+  grid-template-rows: auto minmax(136px, 0.54fr) minmax(0, 1fr);
 }
 
 .sorting-board__active-cargo {
@@ -688,13 +688,34 @@ button {
   grid-row: 2;
   z-index: 3;
   width: min(260px, 42%);
+  display: grid;
+  align-items: center;
   justify-self: center;
-  align-self: center;
+  align-self: stretch;
 }
 
 .sorting-board__active-cargo .cargo-card {
-  min-height: 112px;
+  height: 100%;
+  min-height: 0;
+  max-height: 136px;
+  grid-template-rows: minmax(42px, 1fr) auto auto auto;
+  gap: 4px;
+  padding: 8px;
   box-shadow: 0 14px 24px rgba(8, 38, 111, 0.18);
+}
+
+.sorting-board__active-cargo .particle-diagram {
+  width: min(100%, 58px);
+}
+
+.sorting-board__active-cargo .cargo-card__name {
+  font-size: 16px;
+}
+
+.sorting-board__active-cargo .cargo-card__formula,
+.sorting-board__active-cargo .cargo-card__status {
+  padding: 3px 8px;
+  font-size: 12px;
 }
 
 .sorting-board .drop-bin {
@@ -1596,5 +1617,197 @@ button {
 
   .cargo-belt .cargo-card__name {
     font-size: 10px;
+  }
+}
+
+@media (max-width: 720px) and (max-height: 700px) {
+  .mission-board {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .mission-topbar {
+    gap: 4px;
+  }
+
+  .mission-title {
+    padding: 5px 6px;
+  }
+
+  .mission-title .eyebrow {
+    display: none;
+  }
+
+  .mission-title h1 {
+    font-size: 20px;
+  }
+
+  .mission-status,
+  .score-panel {
+    gap: 3px;
+    padding: 3px;
+  }
+
+  .mission-status span,
+  .score-panel span,
+  .score-panel strong {
+    min-height: 26px;
+    padding: 3px;
+    font-size: 9px;
+  }
+
+  .score-panel strong {
+    font-size: 13px;
+  }
+
+  .mission-board--rescue-rush .mission-layout {
+    grid-template-rows: 136px 62px minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .mission-board--rescue-rush .feedback-panel,
+  .mission-board--rescue-rush .cargo-panel {
+    padding: 5px;
+    gap: 4px;
+  }
+
+  .mission-board--rescue-rush .teacher-controls {
+    gap: 4px;
+  }
+
+  .mission-board--rescue-rush .teacher-controls__selects {
+    gap: 4px;
+  }
+
+  .mission-board--rescue-rush .teacher-control select {
+    min-height: 34px;
+    font-size: 11px;
+  }
+
+  .mission-board--rescue-rush .teacher-controls__guidance {
+    min-height: 28px;
+    padding: 3px 5px;
+    font-size: 11px;
+  }
+
+  .mission-board--rescue-rush .teacher-controls__buttons {
+    gap: 3px;
+  }
+
+  .mission-board--rescue-rush .teacher-controls__buttons button {
+    min-height: 34px;
+    font-size: 8px;
+  }
+
+  .mission-board--rescue-rush .rush-dashboard span {
+    min-height: 22px;
+    font-size: 8px;
+  }
+
+  .mission-board--rescue-rush .panel-heading h2 {
+    font-size: 12px;
+  }
+
+  .mission-board--rescue-rush .cargo-belt {
+    gap: 4px;
+  }
+
+  .mission-board--rescue-rush .cargo-belt .cargo-card {
+    display: grid;
+    align-content: center;
+    min-height: 0;
+    padding: 3px;
+  }
+
+  .mission-board--rescue-rush .cargo-belt .cargo-card__diagram {
+    display: none;
+  }
+
+  .mission-board--rescue-rush .cargo-belt .cargo-card__name {
+    font-size: 9px;
+  }
+
+  .mission-board--rescue-rush .sorting-board {
+    grid-template-rows: auto minmax(48px, 0.34fr) minmax(0, 1fr);
+    gap: 4px;
+    padding: 6px;
+  }
+
+  .mission-board--rescue-rush .cosmo-coach {
+    min-height: 64px;
+    grid-template-columns: 56px minmax(0, 1fr);
+    gap: 6px;
+    padding: 4px 6px;
+  }
+
+  .mission-board--rescue-rush .cosmo-coach__avatar {
+    width: 52px;
+    height: 46px;
+  }
+
+  .mission-board--rescue-rush .cosmo-coach__message strong {
+    font-size: 11px;
+  }
+
+  .mission-board--rescue-rush .cosmo-coach__message span {
+    font-size: 9px;
+    line-height: 1.1;
+  }
+
+  .mission-board--rescue-rush .sorting-board__active-cargo {
+    width: min(132px, 54%);
+  }
+
+  .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card {
+    grid-template-rows: auto auto auto;
+    gap: 1px;
+    padding: 3px;
+  }
+
+  .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card__diagram {
+    display: none;
+  }
+
+  .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card__name {
+    font-size: 11px;
+  }
+
+  .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card__formula,
+  .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card__status {
+    padding: 1px 5px;
+    font-size: 9px;
+  }
+
+  .mission-board--rescue-rush .drop-bin {
+    padding: 4px;
+  }
+
+  .mission-board--rescue-rush .drop-bin strong,
+  .mission-board--rescue-rush .drop-bin h2 {
+    font-size: clamp(13px, 4vw, 17px);
+  }
+
+  .mission-board--rescue-rush .drop-bin span,
+  .mission-board--rescue-rush .drop-bin p {
+    font-size: 8px;
+    line-height: 1.05;
+  }
+
+  .mission-board--rescue-rush .nested-bins {
+    gap: 4px;
+    margin-top: 4px;
+  }
+
+  .mission-board--rescue-rush .nested-bin {
+    min-height: 34px;
+    padding: 3px;
+  }
+
+  .mission-board--rescue-rush .nested-bin strong {
+    font-size: 9px;
+  }
+
+  .mission-board--rescue-rush .nested-bin span {
+    font-size: 8px;
   }
 }
