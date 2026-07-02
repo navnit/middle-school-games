@@ -742,6 +742,105 @@ button {
   color: #581c87;
 }
 
+.cosmo-coach {
+  min-width: 0;
+  min-height: 118px;
+  display: grid;
+  grid-template-columns: 112px minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  border: 2px solid #8fc7ff;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #ffffff, #eef7ff);
+  box-shadow: 0 12px 24px rgba(8, 38, 111, 0.18);
+  padding: 10px 14px;
+  color: var(--blue-dark);
+}
+
+.cosmo-coach__avatar {
+  width: 104px;
+  height: 92px;
+  filter: drop-shadow(0 7px 10px rgba(3, 7, 18, 0.22));
+}
+
+.cosmo-coach__tail,
+.cosmo-coach__antenna,
+.cosmo-coach__smile {
+  fill: none;
+  stroke: #0b2a78;
+  stroke-linecap: round;
+  stroke-width: 5;
+}
+
+.cosmo-coach__tail {
+  stroke: #65a9f4;
+  stroke-width: 6;
+}
+
+.cosmo-coach__body {
+  fill: #e0f2fe;
+  stroke: #0b2a78;
+  stroke-width: 5;
+}
+
+.cosmo-coach__helmet {
+  fill: #ffffff;
+  stroke: #38bdf8;
+  stroke-width: 6;
+}
+
+.cosmo-coach__face {
+  fill: #dcfce7;
+}
+
+.cosmo-coach__eye,
+.cosmo-coach__beacon {
+  fill: #0b2a78;
+}
+
+.cosmo-coach__fin {
+  fill: #facc15;
+  stroke: #0b2a78;
+  stroke-linejoin: round;
+  stroke-width: 4;
+}
+
+.cosmo-coach__message {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.cosmo-coach__message strong {
+  color: var(--blue-dark);
+  font-size: clamp(18px, 1.7vw, 25px);
+  line-height: 1.05;
+}
+
+.cosmo-coach__message span {
+  color: #263d67;
+  font-size: clamp(13px, 1vw, 17px);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.cosmo-coach--warning {
+  border-color: #f97316;
+  background: linear-gradient(180deg, #fff7ed, #ffffff);
+}
+
+.cosmo-coach--success,
+.cosmo-coach--complete {
+  border-color: #22c55e;
+  background: linear-gradient(180deg, #ecfdf3, #ffffff);
+}
+
+.cosmo-coach--hint,
+.cosmo-coach--class-check {
+  border-color: #a78bfa;
+  background: linear-gradient(180deg, #f5f3ff, #ffffff);
+}
+
 .teacher-controls {
   display: grid;
   gap: 10px;
