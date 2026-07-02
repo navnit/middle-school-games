@@ -162,7 +162,7 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
         <section className="cargo-panel" aria-labelledby="active-cargo-title">
           <div className="panel-heading">
             <p className="eyebrow">Cargo Bay</p>
-            <h2 id="active-cargo-title">Active Cargo</h2>
+            <h2 id="active-cargo-title">{isRescueRush ? 'Upcoming Cargo' : 'Active Cargo'}</h2>
           </div>
 
           {activeCargo && !isRescueRush ? (

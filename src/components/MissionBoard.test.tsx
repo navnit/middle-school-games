@@ -52,8 +52,9 @@ describe('MissionBoard', () => {
 
     await user.click(screen.getByRole('button', { name: /Reveal/i }));
 
-    expect(screen.getAllByText(/Helium is an atom/i).length).toBeGreaterThan(0);
-    expect(screen.getByText(/Correct bay: Atom/i)).toBeInTheDocument();
+    const feedbackPanel = screen.getByRole('region', { name: /Feedback and teacher panel/i });
+    expect(within(feedbackPanel).getByText(/Helium is an atom/i)).toBeInTheDocument();
+    expect(within(feedbackPanel).getByText(/Correct bay: Atom/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /Next Cargo/i }));
 
@@ -83,6 +84,7 @@ describe('MissionBoard', () => {
     await user.selectOptions(screen.getByLabelText(/Mode/i), 'rescue-rush');
 
     expect(screen.getByLabelText(/Mission clock/i)).toHaveTextContent('01:30');
+    expect(screen.getByRole('heading', { name: /Upcoming Cargo/i })).toBeInTheDocument();
     expect(screen.getByRole('region', { name: /Cosmo coach/i })).toHaveTextContent(/Cosmo says: ready/i);
     expect(screen.getByRole('region', { name: /Cargo belt/i })).toBeInTheDocument();
     expect(screen.getByText(/Saved 0\/2/i)).toBeInTheDocument();
@@ -141,7 +143,8 @@ describe('MissionBoard', () => {
 
     await user.click(screen.getByRole('button', { name: /Hint/i }));
 
-    expect(screen.getAllByText(/Look for one unbonded particle/i).length).toBeGreaterThan(0);
+    const feedbackPanel = screen.getByRole('region', { name: /Feedback and teacher panel/i });
+    expect(within(feedbackPanel).getByText(/Look for one unbonded particle/i)).toBeInTheDocument();
   });
 
   it('supports dragging active cargo onto a rescue bay', () => {
@@ -153,6 +156,7 @@ describe('MissionBoard', () => {
     fireEvent.drop(screen.getByRole('button', { name: /Drop Helium into Atom/i }), { dataTransfer });
 
     expect(screen.getByRole('heading', { name: /Class Check/i })).toBeInTheDocument();
-    expect(screen.getAllByText(/Proposed bay: Atom/i).length).toBeGreaterThan(0);
+    const feedbackPanel = screen.getByRole('region', { name: /Feedback and teacher panel/i });
+    expect(within(feedbackPanel).getByText(/Proposed bay: Atom/i)).toBeInTheDocument();
   });
 });
