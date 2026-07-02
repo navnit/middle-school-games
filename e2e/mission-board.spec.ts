@@ -22,7 +22,9 @@ test('Practice Mode reveal flow works', async ({ page }) => {
   await expect(page.getByText('Ask the class to vote or justify before revealing.')).toBeVisible();
 
   await page.getByRole('button', { name: 'Reveal' }).click();
-  await expect(page.getByText(/Helium is an atom/i)).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Feedback and teacher panel' }).getByText(/Helium is an atom/i)
+  ).toBeVisible();
   await expect(page.getByText('Correct bay: Atom')).toBeVisible();
 
   await page.getByRole('button', { name: 'Next Cargo' }).click();
@@ -37,7 +39,9 @@ test('Practice Mode drag and drop flow works', async ({ page }) => {
     .dragTo(page.getByRole('button', { name: 'Drop Helium into Atom' }));
 
   await expect(page.getByRole('heading', { name: 'Class Check' })).toBeVisible();
-  await expect(page.getByText('Proposed bay: Atom')).toBeVisible();
+  await expect(
+    page.getByRole('region', { name: 'Feedback and teacher panel' }).getByText('Proposed bay: Atom')
+  ).toBeVisible();
 });
 
 test.describe('in-app browser viewport', () => {
@@ -93,7 +97,7 @@ test.describe('in-app browser viewport', () => {
     await expect(page.getByLabel('Round status').getByText('Rescue Rush')).toBeVisible();
   });
 
-  test('keeps rescue bins compact with a prominent mascot', async ({ page }) => {
+  test('keeps rescue bins compact with a prominent animated Cosmo coach', async ({ page }) => {
     await page.goto('/');
     await page.getByLabel('Mode').selectOption('rescue-rush');
 
@@ -116,7 +120,8 @@ test.describe('in-app browser viewport', () => {
 
       return {
         board: readBox('.sorting-board'),
-        mascot: readBox('.rescue-mascot'),
+        cosmo: readBox('.cosmo-coach'),
+        boardCargo: readBox('.sorting-board__active-cargo'),
         atom: readBox('.drop-bin--atom'),
         molecule: readBox('.drop-bin--molecule'),
         mixture: readBox('.drop-bin--mixture')
@@ -124,12 +129,39 @@ test.describe('in-app browser viewport', () => {
     });
 
     const maxBinHeight = metrics.board.height * 0.55;
-    expect(metrics.mascot.height).toBeGreaterThanOrEqual(68);
-    expect(metrics.mascot.width).toBeGreaterThanOrEqual(180);
+    expect(metrics.cosmo.height).toBeGreaterThanOrEqual(92);
+    expect(metrics.cosmo.width).toBeGreaterThanOrEqual(220);
+    expect(metrics.boardCargo.top).toBeGreaterThanOrEqual(metrics.cosmo.bottom - 4);
     expect(metrics.atom.height).toBeLessThanOrEqual(maxBinHeight);
     expect(metrics.molecule.height).toBeLessThanOrEqual(maxBinHeight);
     expect(metrics.mixture.height).toBeLessThanOrEqual(maxBinHeight);
-    expect(metrics.atom.top).toBeGreaterThanOrEqual(metrics.mascot.bottom + 6);
+  });
+
+  test('Cosmo warning animation does not shift board layout', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Mode').selectOption('rescue-rush');
+
+    const before = await page.locator('.cosmo-coach').boundingBox();
+    await page.getByRole('button', { name: 'Drop Helium into Mixture' }).click();
+    await expect(page.getByRole('region', { name: 'Cosmo coach' })).toHaveText(/Cargo damaged/i);
+    const after = await page.locator('.cosmo-coach').boundingBox();
+
+    expect(before).not.toBeNull();
+    expect(after).not.toBeNull();
+    expect(Math.abs(after!.width - before!.width)).toBeLessThanOrEqual(2);
+    expect(Math.abs(after!.height - before!.height)).toBeLessThanOrEqual(18);
+  });
+
+  test('Cosmo respects reduced motion preference', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await page.goto('/');
+    await page.getByLabel('Mode').selectOption('rescue-rush');
+
+    const animationName = await page
+      .locator('.cosmo-coach__avatar')
+      .evaluate((element) => getComputedStyle(element).animationName);
+
+    expect(animationName).toBe('none');
   });
 });
 
@@ -138,14 +170,17 @@ test('Rescue Rush damaged second try works', async ({ page }) => {
 
   await page.getByLabel('Mode').selectOption('rescue-rush');
   await expect(page.getByLabel('Mission clock')).toHaveText('01:30');
-  await expect(page.getByRole('region', { name: 'Rescue mascot' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Cosmo coach' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Cargo belt' })).toBeVisible();
+  await expect(page.locator('.sorting-board__active-cargo')).toBeVisible();
   await expect(page.getByText('Saved 0/20')).toBeVisible();
 
   await page.getByRole('button', { name: 'Drop Helium into Mixture' }).click();
   await expect(page.getByRole('heading', { name: 'Damaged cargo' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Cosmo coach' })).toHaveText(/Cargo damaged/i);
+  await expect(page.getByRole('region', { name: 'Cosmo coach' })).toHaveAttribute('data-cosmo-tone', 'warning');
   await expect(page.locator('[data-cargo-state="damaged"][aria-label="Helium cargo"]')).toBeVisible();
   await expect(page.getByText('Damaged 1')).toBeVisible();
-  await expect(page.getByText('Cosmo says: second try')).toBeVisible();
 
   await page.getByRole('button', { name: 'Drop Helium into Atom' }).click();
   await expect(page.getByText('Score: 50')).toBeVisible();
