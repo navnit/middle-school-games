@@ -5,6 +5,7 @@ import { TARGET_LABELS } from '../domain/types';
 import type { DragPoint } from './CargoCard';
 import { CargoCard } from './CargoCard';
 import { DropBin } from './DropBin';
+import { RescueMascot } from './RescueMascot';
 import { TeacherControls } from './TeacherControls';
 
 interface MissionBoardProps {
@@ -19,6 +20,57 @@ function readDropTargetFromPoint(x: number, y: number): TargetId | undefined {
   const target = dropTarget?.dataset.dropTarget;
 
   return DROP_TARGET_IDS.includes(target as TargetId) ? (target as TargetId) : undefined;
+}
+
+function formatMissionClock(secondsRemaining: number): string {
+  const minutes = Math.floor(secondsRemaining / 60)
+    .toString()
+    .padStart(2, '0');
+  const seconds = (secondsRemaining % 60).toString().padStart(2, '0');
+
+  return `${minutes}:${seconds}`;
+}
+
+function getRescueMascotTone(
+  mode: string,
+  phase: string,
+  paused: boolean,
+  isActiveCargoDamaged: boolean
+) {
+  if (paused) {
+    return 'paused';
+  }
+
+  if (phase === 'round-complete') {
+    return 'complete';
+  }
+
+  if (mode === 'practice') {
+    return 'practice';
+  }
+
+  return isActiveCargoDamaged ? 'warning' : 'ready';
+}
+
+function getRescueMascotMessage(
+  mode: string,
+  phase: string,
+  paused: boolean,
+  isActiveCargoDamaged: boolean
+): string {
+  if (paused) {
+    return 'Cosmo says: paused';
+  }
+
+  if (phase === 'round-complete') {
+    return 'Cosmo says: mission complete';
+  }
+
+  if (mode === 'practice') {
+    return 'Cosmo is listening for evidence';
+  }
+
+  return isActiveCargoDamaged ? 'Cosmo says: second try' : 'Cosmo is ready';
 }
 
 export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProps) {
@@ -43,7 +95,20 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
   const draggingCargo = draggingCargoId
     ? cargoItems.find((item) => item.id === draggingCargoId)
     : undefined;
+  const isActiveCargoDamaged = Boolean(activeCargo && state.damagedCargoIds.includes(activeCargo.id));
   const isActiveCargoDraggable = Boolean(activeCargo && !state.paused);
+  const mascotTone = getRescueMascotTone(
+    state.mode,
+    state.phase,
+    state.paused,
+    isActiveCargoDamaged
+  );
+  const mascotMessage = getRescueMascotMessage(
+    state.mode,
+    state.phase,
+    state.paused,
+    isActiveCargoDamaged
+  );
   const clearDragState = useCallback(() => {
     setDraggingCargoId(undefined);
     setDragPoint(undefined);
@@ -102,6 +167,20 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
     };
   }, [activeCargo?.id, clearDragState, draggingCargoId, state.paused]);
 
+  useEffect(() => {
+    if (state.mode !== 'rescue-rush' || state.paused || state.phase === 'round-complete') {
+      return;
+    }
+
+    const timerId = window.setInterval(() => {
+      dispatch({ type: 'tick-rescue-timer' });
+    }, 1000);
+
+    return () => {
+      window.clearInterval(timerId);
+    };
+  }, [state.mode, state.paused, state.phase]);
+
   return (
     <main
       className={`mission-board${draggingCargoId ? ' mission-board--dragging' : ''}`}
@@ -115,7 +194,13 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
         <div className="mission-status" aria-label="Round status">
           <span>{state.mode === 'practice' ? 'Practice Mode' : 'Rescue Rush'}</span>
           <span>{state.paused ? 'Paused' : 'Round Active'}</span>
-          <span>{state.phase === 'round-complete' ? 'Round Complete' : `Cargo ${state.activeIndex + 1} of ${state.cargoOrder.length}`}</span>
+          <span aria-label={state.mode === 'rescue-rush' ? 'Mission clock' : undefined}>
+            {state.mode === 'rescue-rush'
+              ? formatMissionClock(state.rescueRushSecondsRemaining)
+              : state.phase === 'round-complete'
+                ? 'Round Complete'
+                : `Cargo ${state.activeIndex + 1} of ${state.cargoOrder.length}`}
+          </span>
         </div>
         <div className="score-panel" aria-label="Score panel">
           <span>{state.playStyle === 'team-turns' ? `Current Team: ${currentTeam}` : 'Class Co-op'}</span>
@@ -157,6 +242,7 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
         </section>
 
         <section className="sorting-board" aria-label="Rescue bays">
+          <RescueMascot message={mascotMessage} tone={mascotTone} />
           <DropBin
             kind="atom"
             activeCargoName={activeCargo?.displayName}
@@ -195,6 +281,14 @@ export function MissionBoard({ cargoItems, initialCargoOrder }: MissionBoardProp
             onPause={() => dispatch({ type: 'toggle-pause' })}
             onSwitchTeam={() => dispatch({ type: 'switch-team' })}
           />
+
+          {state.mode === 'rescue-rush' ? (
+            <section className="rush-dashboard" aria-label="Rescue Rush progress">
+              <span>Saved {state.rescuedCargoIds.length}/{state.cargoOrder.length}</span>
+              <span>Damaged {state.damagedCargoIds.length}</span>
+              <span>Repair Dock {state.repairDockCargoIds.length}</span>
+            </section>
+          ) : null}
 
           <div className="feedback-stack">
             {activeCargo && state.hintedCargoId === activeCargo.id ? (

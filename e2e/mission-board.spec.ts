@@ -98,9 +98,15 @@ test('Rescue Rush damaged second try works', async ({ page }) => {
   await page.goto('/');
 
   await page.getByLabel('Mode').selectOption('rescue-rush');
+  await expect(page.getByLabel('Mission clock')).toHaveText('01:30');
+  await expect(page.getByRole('region', { name: 'Rescue mascot' })).toBeVisible();
+  await expect(page.getByText('Saved 0/20')).toBeVisible();
+
   await page.getByRole('button', { name: 'Drop Helium into Mixture' }).click();
   await expect(page.getByRole('heading', { name: 'Damaged cargo' })).toBeVisible();
   await expect(page.locator('[data-cargo-state="damaged"][aria-label="Helium cargo"]')).toBeVisible();
+  await expect(page.getByText('Damaged 1')).toBeVisible();
+  await expect(page.getByText('Cosmo says: second try')).toBeVisible();
 
   await page.getByRole('button', { name: 'Drop Helium into Atom' }).click();
   await expect(page.getByText('Score: 50')).toBeVisible();

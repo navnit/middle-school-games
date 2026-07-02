@@ -3,6 +3,8 @@ import type { CargoItem, GameMode, PlayStyle, TargetId, ValidationResult } from 
 
 export type GamePhase = 'ready' | 'class-check' | 'revealed' | 'round-complete';
 
+export const RESCUE_RUSH_SECONDS = 90;
+
 export interface ClassCheckState {
   cargoId: string;
   proposedTarget: TargetId;
@@ -27,6 +29,7 @@ export interface GameState {
   rescuedCargoIds: string[];
   damagedCargoIds: string[];
   repairDockCargoIds: string[];
+  rescueRushSecondsRemaining: number;
   hintedCargoId?: string;
   classCheck?: ClassCheckState;
   revealed?: ValidationResult;
@@ -39,6 +42,7 @@ export type GameAction =
   | { type: 'next-cargo' }
   | { type: 'mark-repaired'; cargoId: string }
   | { type: 'show-hint' }
+  | { type: 'tick-rescue-timer' }
   | { type: 'toggle-pause' }
   | { type: 'set-mode'; mode: GameMode }
   | { type: 'set-play-style'; playStyle: PlayStyle }
@@ -79,6 +83,7 @@ export function createInitialGameState(
     rescuedCargoIds: [],
     damagedCargoIds: [],
     repairDockCargoIds: [],
+    rescueRushSecondsRemaining: RESCUE_RUSH_SECONDS,
     hintedCargoId: undefined,
     classCheck: undefined,
     revealed: undefined,
@@ -138,6 +143,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       });
     case 'show-hint':
       return handleShowHint(state);
+    case 'tick-rescue-timer':
+      return handleRescueTimerTick(state);
     case 'drop-on-target':
       return handleDrop(state, action.target);
     case 'reveal':
@@ -151,6 +158,29 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'mark-repaired':
       return handleMarkRepaired(state, action.cargoId);
   }
+}
+
+function handleRescueTimerTick(state: GameState): GameState {
+  if (state.mode !== 'rescue-rush' || state.phase === 'round-complete') {
+    return state;
+  }
+
+  const rescueRushSecondsRemaining = Math.max(0, state.rescueRushSecondsRemaining - 1);
+
+  if (rescueRushSecondsRemaining > 0) {
+    return {
+      ...state,
+      rescueRushSecondsRemaining
+    };
+  }
+
+  return {
+    ...clearCargoFeedback(state),
+    rescueRushSecondsRemaining,
+    activeCargoId: undefined,
+    activeIndex: state.cargoOrder.length,
+    phase: 'round-complete'
+  };
 }
 
 function handleShowHint(state: GameState): GameState {

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { CARGO_LIBRARY } from '../content/cargoLibrary';
-import { createInitialGameState, gameReducer, getActiveCargo } from './gameState';
+import {
+  RESCUE_RUSH_SECONDS,
+  createInitialGameState,
+  gameReducer,
+  getActiveCargo
+} from './gameState';
 
 const cargoOrder = ['helium', 'ozone-o3', 'water-h2o'];
 
@@ -87,6 +92,36 @@ describe('gameReducer', () => {
     expect(next.scores.Alpha).toBe(100);
     expect(next.rescuedCargoIds).toEqual(['helium']);
     expect(next.activeCargoId).toBe('ozone-o3');
+  });
+
+  it('counts down the Rescue Rush timer without adding undo history', () => {
+    const state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
+    const ticked = gameReducer(state, { type: 'tick-rescue-timer' });
+
+    expect(state.rescueRushSecondsRemaining).toBe(RESCUE_RUSH_SECONDS);
+    expect(ticked.rescueRushSecondsRemaining).toBe(RESCUE_RUSH_SECONDS - 1);
+    expect(ticked.history).toEqual([]);
+  });
+
+  it('does not count down the timer in Practice Mode or while paused', () => {
+    const practice = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'practice' });
+    const rescueRush = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
+    const paused = gameReducer(rescueRush, { type: 'toggle-pause' });
+
+    expect(gameReducer(practice, { type: 'tick-rescue-timer' })).toBe(practice);
+    expect(gameReducer(paused, { type: 'tick-rescue-timer' })).toBe(paused);
+  });
+
+  it('ends Rescue Rush when the timer reaches zero', () => {
+    let state = createInitialGameState(CARGO_LIBRARY, { cargoOrder, mode: 'rescue-rush' });
+
+    for (let index = 0; index < RESCUE_RUSH_SECONDS; index += 1) {
+      state = gameReducer(state, { type: 'tick-rescue-timer' });
+    }
+
+    expect(state.rescueRushSecondsRemaining).toBe(0);
+    expect(state.phase).toBe('round-complete');
+    expect(state.activeCargoId).toBeUndefined();
   });
 
   it('damages Rescue Rush cargo on the first wrong drop and keeps it active', () => {

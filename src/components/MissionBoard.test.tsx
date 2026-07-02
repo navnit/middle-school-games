@@ -67,6 +67,25 @@ describe('MissionBoard', () => {
     expect(screen.getByText('O3')).toBeInTheDocument();
   });
 
+  it('shows the Rescue Rush mascot, clock, and progress HUD', async () => {
+    const user = userEvent.setup();
+    render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
+
+    await user.selectOptions(screen.getByLabelText(/Mode/i), 'rescue-rush');
+
+    expect(screen.getByLabelText(/Mission clock/i)).toHaveTextContent('01:30');
+    expect(screen.getByRole('region', { name: /Rescue mascot/i })).toBeInTheDocument();
+    expect(screen.getByText(/Cosmo is ready/i)).toBeInTheDocument();
+    expect(screen.getByText(/Saved 0\/2/i)).toBeInTheDocument();
+    expect(screen.getByText(/Damaged 0/i)).toBeInTheDocument();
+    expect(screen.getByText(/Repair Dock 0/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Drop Helium into Mixture/i }));
+
+    expect(screen.getByText(/Cosmo says: second try/i)).toBeInTheDocument();
+    expect(screen.getByText(/Damaged 1/i)).toBeInTheDocument();
+  });
+
   it('moves cargo to the Repair Dock after two Rescue Rush mistakes and can mark it repaired', async () => {
     const user = userEvent.setup();
     render(<MissionBoard cargoItems={CARGO_LIBRARY} initialCargoOrder={initialCargoOrder} />);
