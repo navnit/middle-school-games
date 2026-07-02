@@ -421,7 +421,7 @@ button {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(300px, 1.6fr) minmax(260px, 0.9fr);
   gap: 10px;
-  align-items: stretch;
+  align-items: end;
 }
 
 .mission-title,
@@ -599,7 +599,7 @@ button {
     linear-gradient(180deg, rgba(10, 53, 127, 0.86) 0 22%, rgba(242, 248, 255, 0.94) 22%),
     linear-gradient(90deg, #d5dde9, #f8fbff 20%, #edf3f9 80%, #cfd9e5);
   box-shadow: inset 0 0 0 5px rgba(255, 255, 255, 0.72), var(--shadow);
-  padding: 56px 10px 12px;
+  padding: 82px 14px 18px;
   position: relative;
   overflow: hidden;
 }
@@ -607,7 +607,7 @@ button {
 .sorting-board::before {
   content: "Sort the Cargo";
   position: absolute;
-  top: 42px;
+  top: 60px;
   left: 50%;
   transform: translateX(-50%);
   min-width: 176px;
@@ -627,7 +627,7 @@ button {
   content: "";
   position: absolute;
   inset: 10px 11% auto;
-  height: 34px;
+  height: 42px;
   border: 3px solid #83c5ff;
   border-radius: 8px;
   background:
@@ -640,6 +640,8 @@ button {
 
 .sorting-board .drop-bin {
   min-height: 0;
+  height: 66%;
+  align-self: end;
 }
 
 .sorting-board .drop-bin--molecule {
@@ -651,7 +653,7 @@ button {
   z-index: 4;
   top: 7px;
   left: 18px;
-  max-width: min(34%, 220px);
+  max-width: min(47%, 330px);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -661,8 +663,8 @@ button {
 
 .rescue-mascot__sprite {
   flex: 0 0 auto;
-  width: 58px;
-  height: 48px;
+  width: 96px;
+  height: 80px;
   filter: drop-shadow(0 5px 8px rgba(3, 7, 18, 0.22));
 }
 
@@ -1067,7 +1069,7 @@ button {
   }
 
   .rescue-mascot {
-    max-width: 165px;
+    max-width: 260px;
   }
 
 }
@@ -1257,18 +1259,18 @@ button {
   .rescue-mascot {
     top: 7px;
     left: 8px;
-    max-width: 126px;
-    gap: 4px;
+    max-width: 212px;
+    gap: 6px;
   }
 
   .rescue-mascot__sprite {
-    width: 44px;
-    height: 38px;
+    width: 82px;
+    height: 70px;
   }
 
   .rescue-mascot p {
-    padding: 4px 5px;
-    font-size: 8px;
+    padding: 5px 6px;
+    font-size: 10px;
   }
 
   .repair-item {
@@ -1289,11 +1291,11 @@ button {
   .sorting-board {
     grid-template-columns: minmax(66px, 0.82fr) minmax(128px, 1.55fr) minmax(66px, 0.82fr);
     gap: 6px;
-    padding: 42px 6px 8px;
+    padding: 104px 8px 10px;
   }
 
   .sorting-board::before {
-    top: 30px;
+    top: 82px;
     min-width: 130px;
     padding: 5px 8px;
     font-size: 10px;
@@ -1301,7 +1303,7 @@ button {
 
   .sorting-board::after {
     inset: 8px 10% auto;
-    height: 24px;
+    height: 52px;
     border-width: 2px;
   }
 
@@ -1332,7 +1334,7 @@ button {
   }
 
   .nested-bin {
-    min-height: 58px;
+    min-height: 48px;
     padding: 4px;
   }
 

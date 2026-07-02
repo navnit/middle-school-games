@@ -92,6 +92,45 @@ test.describe('in-app browser viewport', () => {
     await expect(modeSelect).toHaveValue('rescue-rush');
     await expect(page.getByLabel('Round status').getByText('Rescue Rush')).toBeVisible();
   });
+
+  test('keeps rescue bins compact with a prominent mascot', async ({ page }) => {
+    await page.goto('/');
+    await page.getByLabel('Mode').selectOption('rescue-rush');
+
+    const metrics = await page.evaluate(() => {
+      const readBox = (selector: string) => {
+        const element = document.querySelector(selector);
+        if (!element) {
+          throw new Error(`Missing ${selector}`);
+        }
+        const rect = element.getBoundingClientRect();
+        return {
+          top: rect.top,
+          bottom: rect.bottom,
+          left: rect.left,
+          right: rect.right,
+          width: rect.width,
+          height: rect.height
+        };
+      };
+
+      return {
+        board: readBox('.sorting-board'),
+        mascot: readBox('.rescue-mascot'),
+        atom: readBox('.drop-bin--atom'),
+        molecule: readBox('.drop-bin--molecule'),
+        mixture: readBox('.drop-bin--mixture')
+      };
+    });
+
+    const maxBinHeight = metrics.board.height * 0.55;
+    expect(metrics.mascot.height).toBeGreaterThanOrEqual(68);
+    expect(metrics.mascot.width).toBeGreaterThanOrEqual(180);
+    expect(metrics.atom.height).toBeLessThanOrEqual(maxBinHeight);
+    expect(metrics.molecule.height).toBeLessThanOrEqual(maxBinHeight);
+    expect(metrics.mixture.height).toBeLessThanOrEqual(maxBinHeight);
+    expect(metrics.atom.top).toBeGreaterThanOrEqual(metrics.mascot.bottom + 6);
+  });
 });
 
 test('Rescue Rush damaged second try works', async ({ page }) => {
