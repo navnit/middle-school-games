@@ -1660,42 +1660,61 @@ button {
     font-size: 13px;
   }
 
+  .mission-layout,
   .mission-board--rescue-rush .mission-layout {
-    grid-template-rows: 136px 62px minmax(0, 1fr);
+    grid-template-rows: 158px 56px minmax(0, 1fr);
     gap: 6px;
   }
 
+  .feedback-panel,
+  .cargo-panel,
   .mission-board--rescue-rush .feedback-panel,
   .mission-board--rescue-rush .cargo-panel {
     padding: 5px;
     gap: 4px;
   }
 
+  .cargo-panel {
+    grid-template-rows: minmax(0, 1fr);
+  }
+
+  .cargo-panel .panel-heading,
+  .queue-panel {
+    display: none;
+  }
+
+  .teacher-controls,
   .mission-board--rescue-rush .teacher-controls {
     gap: 4px;
   }
 
+  .teacher-controls__selects,
   .mission-board--rescue-rush .teacher-controls__selects {
     gap: 4px;
   }
 
+  .teacher-control select,
   .mission-board--rescue-rush .teacher-control select {
-    min-height: 34px;
+    height: 44px;
+    min-height: 44px;
     font-size: 11px;
   }
 
+  .teacher-controls__guidance,
   .mission-board--rescue-rush .teacher-controls__guidance {
-    min-height: 28px;
+    min-height: 26px;
     padding: 3px 5px;
     font-size: 11px;
   }
 
+  .teacher-controls__buttons,
   .mission-board--rescue-rush .teacher-controls__buttons {
     gap: 3px;
   }
 
+  .teacher-controls__buttons button,
   .mission-board--rescue-rush .teacher-controls__buttons button {
-    min-height: 34px;
+    min-height: 44px;
     font-size: 8px;
   }
 
@@ -1704,8 +1723,37 @@ button {
     font-size: 8px;
   }
 
-  .mission-board--rescue-rush .panel-heading h2 {
+  .cargo-panel > .cargo-card {
+    height: 100%;
+    min-height: 44px;
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: 1px 6px;
+    align-items: center;
+    padding: 4px 6px;
+  }
+
+  .cargo-panel > .cargo-card .cargo-card__diagram {
+    grid-row: 1 / 3;
+    width: 42px;
+  }
+
+  .cargo-panel > .cargo-card .particle-diagram {
+    width: 40px;
+  }
+
+  .cargo-panel > .cargo-card .cargo-card__name {
+    grid-column: 2 / 4;
     font-size: 12px;
+    line-height: 1;
+    text-align: left;
+  }
+
+  .cargo-panel > .cargo-card .cargo-card__formula,
+  .cargo-panel > .cargo-card .cargo-card__status {
+    justify-self: start;
+    padding: 1px 6px;
+    font-size: 9px;
   }
 
   .mission-board--rescue-rush .cargo-belt {
@@ -1727,28 +1775,37 @@ button {
     font-size: 9px;
   }
 
+  .sorting-board,
   .mission-board--rescue-rush .sorting-board {
-    grid-template-rows: auto minmax(48px, 0.34fr) minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
     gap: 4px;
     padding: 6px;
   }
 
+  .mission-board--rescue-rush .sorting-board {
+    grid-template-rows: auto minmax(44px, 0.3fr) minmax(0, 1fr);
+  }
+
+  .cosmo-coach,
   .mission-board--rescue-rush .cosmo-coach {
-    min-height: 64px;
+    min-height: 56px;
     grid-template-columns: 56px minmax(0, 1fr);
     gap: 6px;
     padding: 4px 6px;
   }
 
+  .cosmo-coach__avatar,
   .mission-board--rescue-rush .cosmo-coach__avatar {
-    width: 52px;
-    height: 46px;
+    width: 48px;
+    height: 42px;
   }
 
+  .cosmo-coach__message strong,
   .mission-board--rescue-rush .cosmo-coach__message strong {
     font-size: 11px;
   }
 
+  .cosmo-coach__message span,
   .mission-board--rescue-rush .cosmo-coach__message span {
     font-size: 9px;
     line-height: 1.1;
@@ -1759,6 +1816,9 @@ button {
   }
 
   .mission-board--rescue-rush .sorting-board__active-cargo .cargo-card {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
     grid-template-rows: auto auto auto;
     gap: 1px;
     padding: 3px;
@@ -1778,36 +1838,47 @@ button {
     font-size: 9px;
   }
 
+  .drop-bin,
   .mission-board--rescue-rush .drop-bin {
     padding: 4px;
   }
 
+  .drop-bin strong,
+  .drop-bin h2,
   .mission-board--rescue-rush .drop-bin strong,
   .mission-board--rescue-rush .drop-bin h2 {
     font-size: clamp(13px, 4vw, 17px);
   }
 
+  .drop-bin span,
+  .drop-bin p,
   .mission-board--rescue-rush .drop-bin span,
   .mission-board--rescue-rush .drop-bin p {
-    font-size: 8px;
-    line-height: 1.05;
+    display: none;
   }
 
+  .nested-bins,
   .mission-board--rescue-rush .nested-bins {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 4px;
     margin-top: 4px;
   }
 
+  .nested-bin,
   .mission-board--rescue-rush .nested-bin {
-    min-height: 34px;
+    min-height: 44px;
     padding: 3px;
   }
 
+  .nested-bin strong,
   .mission-board--rescue-rush .nested-bin strong {
-    font-size: 9px;
+    font-size: 8px;
+    line-height: 1;
+    overflow-wrap: anywhere;
   }
 
+  .nested-bin span,
   .mission-board--rescue-rush .nested-bin span {
-    font-size: 8px;
+    display: none;
   }
 }

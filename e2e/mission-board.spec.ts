@@ -7,6 +7,10 @@ type LayoutBox = {
   right: number;
   width: number;
   height: number;
+  clientWidth: number;
+  clientHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
 };
 
 type RescueLayoutMetrics = {
@@ -30,6 +34,15 @@ type RescueLayoutKey = keyof Pick<
 
 const rescueLayoutKeys: RescueLayoutKey[] = ['board', 'cosmo', 'boardCargo', 'atom', 'molecule', 'mixture'];
 
+type PracticeLayoutMetrics = Omit<RescueLayoutMetrics, 'boardCargo'> & {
+  activeCargo: LayoutBox;
+};
+
+const practiceLayoutKeys: (keyof Pick<
+  PracticeLayoutMetrics,
+  'board' | 'cosmo' | 'activeCargo' | 'atom' | 'molecule' | 'mixture'
+>)[] = ['board', 'cosmo', 'activeCargo', 'atom', 'molecule', 'mixture'];
+
 async function readRescueLayoutMetrics(page: Page): Promise<RescueLayoutMetrics> {
   return page.evaluate(() => {
     const readBox = (selector: string) => {
@@ -44,7 +57,11 @@ async function readRescueLayoutMetrics(page: Page): Promise<RescueLayoutMetrics>
         left: rect.left,
         right: rect.right,
         width: rect.width,
-        height: rect.height
+        height: rect.height,
+        clientWidth: element.clientWidth,
+        clientHeight: element.clientHeight,
+        scrollWidth: element.scrollWidth,
+        scrollHeight: element.scrollHeight
       };
     };
 
@@ -64,6 +81,50 @@ async function readRescueLayoutMetrics(page: Page): Promise<RescueLayoutMetrics>
   });
 }
 
+async function readPracticeLayoutMetrics(page: Page): Promise<PracticeLayoutMetrics> {
+  return page.evaluate(() => {
+    const readBox = (selector: string) => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        throw new Error(`Missing ${selector}`);
+      }
+      const rect = element.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+        clientWidth: element.clientWidth,
+        clientHeight: element.clientHeight,
+        scrollWidth: element.scrollWidth,
+        scrollHeight: element.scrollHeight
+      };
+    };
+
+    return {
+      viewportWidth: window.innerWidth,
+      viewportHeight: window.innerHeight,
+      documentWidth: document.documentElement.scrollWidth,
+      documentHeight: document.documentElement.scrollHeight,
+      bodyHeight: document.body.scrollHeight,
+      board: readBox('.sorting-board'),
+      cosmo: readBox('.cosmo-coach'),
+      activeCargo: readBox('.cargo-panel > [data-cargo-state="active"]'),
+      atom: readBox('.drop-bin--atom'),
+      molecule: readBox('.drop-bin--molecule'),
+      mixture: readBox('.drop-bin--mixture')
+    };
+  });
+}
+
+function expectNoPageScroll(metrics: Pick<RescueLayoutMetrics, 'viewportWidth' | 'viewportHeight' | 'documentWidth' | 'documentHeight' | 'bodyHeight'>) {
+  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 2);
+  expect(metrics.documentHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+  expect(metrics.bodyHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+}
+
 function firstRescueBinTop(metrics: RescueLayoutMetrics) {
   return Math.min(metrics.atom.top, metrics.molecule.top, metrics.mixture.top);
 }
@@ -73,6 +134,18 @@ function expectActiveCargoAboveBins(metrics: RescueLayoutMetrics, gap = 4) {
 }
 
 function expectRescueBinsInsideBoardAndViewport(metrics: RescueLayoutMetrics) {
+  for (const key of ['atom', 'molecule', 'mixture'] as const) {
+    const box = metrics[key];
+    expect(box.top, `${key} top should stay inside board`).toBeGreaterThanOrEqual(metrics.board.top - 1);
+    expect(box.bottom, `${key} bottom should stay inside board`).toBeLessThanOrEqual(metrics.board.bottom + 1);
+    expect(box.left, `${key} left should stay inside viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.right, `${key} right should stay inside viewport`).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+    expect(box.top, `${key} top should stay inside viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.bottom, `${key} bottom should stay inside viewport`).toBeLessThanOrEqual(metrics.viewportHeight + 1);
+  }
+}
+
+function expectPracticeBinsInsideBoardAndViewport(metrics: PracticeLayoutMetrics) {
   for (const key of ['atom', 'molecule', 'mixture'] as const) {
     const box = metrics[key];
     expect(box.top, `${key} top should stay inside board`).toBeGreaterThanOrEqual(metrics.board.top - 1);
@@ -96,6 +169,58 @@ function expectLayoutStable(before: RescueLayoutMetrics, after: RescueLayoutMetr
   }
 }
 
+async function expectVisibleTouchTargetsAtLeast(page: Page, minSize = 44) {
+  const smallTargets = await page.evaluate((minimum) => {
+    return Array.from(document.querySelectorAll<HTMLElement>('button, select'))
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        const style = getComputedStyle(element);
+        return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+      })
+      .filter((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width < minimum || rect.height < minimum;
+      })
+      .map((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          label: element.getAttribute('aria-label') ?? element.textContent?.trim(),
+          width: rect.width,
+          height: rect.height
+        };
+      });
+  }, minSize);
+
+  expect(smallTargets).toEqual([]);
+}
+
+async function expectNoVisibleOverflow(page: Page, selectors: string[]) {
+  const overflowing = await page.evaluate((targetSelectors) => {
+    return targetSelectors.flatMap((selector) =>
+      Array.from(document.querySelectorAll<HTMLElement>(selector))
+        .filter((element) => {
+          const rect = element.getBoundingClientRect();
+          const style = getComputedStyle(element);
+          return rect.width > 0 && rect.height > 0 && style.visibility !== 'hidden' && style.display !== 'none';
+        })
+        .filter(
+          (element) =>
+            element.scrollHeight > element.clientHeight + 1 || element.scrollWidth > element.clientWidth + 1
+        )
+        .map((element) => ({
+          selector,
+          text: element.textContent?.trim(),
+          clientWidth: element.clientWidth,
+          scrollWidth: element.scrollWidth,
+          clientHeight: element.clientHeight,
+          scrollHeight: element.scrollHeight
+        }))
+    );
+  }, selectors);
+
+  expect(overflowing).toEqual([]);
+}
+
 async function expectShortMobileRescueRushLayout(page: Page) {
   await page.goto('/');
   await page.getByLabel('Mode').selectOption('rescue-rush');
@@ -109,9 +234,39 @@ async function expectShortMobileRescueRushLayout(page: Page) {
   }
 
   expectActiveCargoAboveBins(metrics);
-  expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 2);
-  expect(metrics.documentHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
-  expect(metrics.bodyHeight).toBeLessThanOrEqual(metrics.viewportHeight + 2);
+  expectNoPageScroll(metrics);
+  await expectNoVisibleOverflow(page, [
+    '.sorting-board',
+    '.sorting-board__active-cargo',
+    '.sorting-board__active-cargo .cargo-card',
+    '.drop-bin--atom',
+    '.drop-bin--molecule',
+    '.drop-bin--mixture'
+  ]);
+  await expectVisibleTouchTargetsAtLeast(page);
+}
+
+async function expectShortMobilePracticeLayout(page: Page) {
+  await page.goto('/');
+
+  const metrics = await readPracticeLayoutMetrics(page);
+
+  for (const key of practiceLayoutKeys) {
+    const box = metrics[key];
+    expect(box.top, `${key} top should stay in viewport`).toBeGreaterThanOrEqual(-1);
+    expect(box.bottom, `${key} bottom should stay in viewport`).toBeLessThanOrEqual(metrics.viewportHeight + 1);
+  }
+
+  expectPracticeBinsInsideBoardAndViewport(metrics);
+  expectNoPageScroll(metrics);
+  await expectNoVisibleOverflow(page, [
+    '.sorting-board',
+    '.drop-bin--atom',
+    '.drop-bin--molecule',
+    '.drop-bin--mixture',
+    '.cargo-panel > [data-cargo-state="active"]'
+  ]);
+  await expectVisibleTouchTargetsAtLeast(page);
 }
 
 test('renders classroom board with nested molecule bins', async ({ page }) => {
@@ -270,6 +425,10 @@ test.describe('in-app browser viewport', () => {
 test.describe('short mobile Rescue Rush viewport', () => {
   test.use({ viewport: { width: 360, height: 640 } });
 
+  test('short mobile keeps Practice board usable without page scroll', async ({ page }) => {
+    await expectShortMobilePracticeLayout(page);
+  });
+
   test('short mobile keeps Cosmo, active cargo, and rescue bins in view without page scroll', async ({ page }) => {
     await expectShortMobileRescueRushLayout(page);
   });
@@ -277,6 +436,10 @@ test.describe('short mobile Rescue Rush viewport', () => {
 
 test.describe('extra short mobile Rescue Rush viewport', () => {
   test.use({ viewport: { width: 320, height: 568 } });
+
+  test('short mobile 320x568 keeps Practice board usable without page scroll', async ({ page }) => {
+    await expectShortMobilePracticeLayout(page);
+  });
 
   test('short mobile 320x568 keeps Rescue Rush board usable without page scroll', async ({ page }) => {
     await expectShortMobileRescueRushLayout(page);
